@@ -326,7 +326,7 @@ function dag(){
  var H0=h;h='<div id="tray" class="card"><b>Nog te plaatsen</b>';
  if(!tray.length)h+='<p class="mut">Alles heeft een plek.</p>';else h+='<p class="mut">Sleep met ⠿ naar de tijdlijn, of tik op Plaats.</p>';
  h+='<div class="tray">'+tray.map(function(i){return'<div class="chp'+(since(i.x.id)==0?" dn":"")+'"><button class="hd" data-dr="'+i.x.id+'" aria-label="Sleep">⠿</button><span>'+ic(iconFor(i.x),16)+' '+esc(i.x.n)+'</span>'+(since(i.x.id)==0?'<button class="hd" data-un="'+i.x.id+'" aria-label="Toch niet gedaan">↩</button>':'')+(sw(i.x)?'<button class="hd" data-sw="'+i.x.id+'" aria-label="Andere" style="font-size:18px">↻</button>':'')+(since(i.x.id)==0?'':'<button class="hd ck" data-ck="'+i.x.id+'" aria-label="Klaar">✓</button>')+'<button class="sm" data-pl="'+i.x.id+'" data-pp="'+i.p+'">Plaats</button></div>'}).join("")+'</div></div>';
- var TRH=h;h=H0;
+ var TRH=tray.length?h:"";h=H0;
  var ap=appsOn(ds()).sort(function(a,b){return a.t<b.t?-1:1}),bl=[];
  items.forEach(function(i){if(s[i.x.id]!==undefined)bl.push({id:i.x.id,m:s[i.x.id],d:bd(i.x),x:i.x,t:"i"})});
  ap.forEach(function(a){bl.push({id:a.id,m:tmin(a.t),d:a.dur||60,n:a.n,t:"a"})});
