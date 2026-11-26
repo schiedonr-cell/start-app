@@ -15,7 +15,7 @@
         android:textColor="#EAF2F0"
         android:textSize="14sp" />
 
-    <View
+    <TextView
         android:id="@+id/i_bar"
         android:layout_width="3dp"
         android:layout_height="match_parent"
