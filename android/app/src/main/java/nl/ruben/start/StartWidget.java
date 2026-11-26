@@ -45,10 +45,10 @@ public class StartWidget extends AppWidgetProvider {
 
     static RemoteViews build(Context c) {
         SharedPreferences sp = c.getSharedPreferences(StartNativePlugin.PREFS, Context.MODE_PRIVATE);
-        int bg = color(sp, "w_bg", "#182528") | 0xFF000000;
-        int alpha = Math.max(0, Math.min(100, sp.getInt("w_alpha", 70)));
-        int text = color(sp, "w_text", "#EAF2F0");
-        int acc = color(sp, "w_acc", "#E8B65C");
+        int bg = color(sp, "w_bg", "#0B0B0B") | 0xFF000000;
+        int alpha = Math.max(0, Math.min(100, sp.getInt("w_alpha", 55)));
+        int text = color(sp, "w_text", "#E6D3A8");
+        int acc = color(sp, "w_acc", "#D9B26A");
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_start);
         v.setInt(R.id.w_bg, "setColorFilter", bg);
         v.setInt(R.id.w_bg, "setImageAlpha", Math.round(alpha * 2.55f));

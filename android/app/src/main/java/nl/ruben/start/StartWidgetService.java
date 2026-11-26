@@ -161,8 +161,8 @@ public class StartWidgetService extends RemoteViewsService {
                 String d = o.optString("d", "");
                 String l = o.optString("l", "");
                 android.content.SharedPreferences sp = ctx.getSharedPreferences(StartNativePlugin.PREFS, Context.MODE_PRIVATE);
-                int text = StartWidget.color(sp, "w_text", "#EAF2F0");
-                int acc = StartWidget.color(sp, "w_acc", "#E8B65C");
+                int text = StartWidget.color(sp, "w_text", "#E6D3A8");
+                int acc = StartWidget.color(sp, "w_acc", "#D9B26A");
                 int soft = (text & 0x00FFFFFF) | 0xC0000000;
                 v.setTextColor(R.id.i_date, text);
                 v.setTextColor(R.id.i_title, text);
