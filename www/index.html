@@ -323,9 +323,9 @@ function dag(){
  if(!tray.length)h+='<p class="mut">Alles heeft een plek.</p>';else h+='<p class="mut">Sleep met ⠿ naar de tijdlijn, of tik op Plaats.</p>';
  h+='<div class="tray">'+tray.map(function(i){return'<div class="chp'+(since(i.x.id)==0?" dn":"")+'"><button class="hd" data-dr="'+i.x.id+'" aria-label="Sleep">⠿</button><span>'+ic(iconFor(i.x),16)+' '+esc(i.x.n)+'</span>'+(since(i.x.id)==0?'<button class="hd" data-un="'+i.x.id+'" aria-label="Toch niet gedaan">↩</button>':'')+(sw(i.x)?'<button class="hd" data-sw="'+i.x.id+'" aria-label="Andere" style="font-size:18px">↻</button>':'')+(since(i.x.id)==0?'':'<button class="hd ck" data-ck="'+i.x.id+'" aria-label="Klaar">✓</button>')+'<button class="sm" data-pl="'+i.x.id+'" data-pp="'+i.p+'">Plaats</button></div>'}).join("")+'</div></div>';
  var TRH=h;h=H0;
- var ap=S.appts.filter(function(a){return a.d==ds()}).sort(function(a,b){return a.t<b.t?-1:1}),bl=[];
+ var ap=appsOn(ds()).sort(function(a,b){return a.t<b.t?-1:1}),bl=[];
  items.forEach(function(i){if(s[i.x.id]!==undefined)bl.push({id:i.x.id,m:s[i.x.id],d:bd(i.x),x:i.x,t:"i"})});
- ap.forEach(function(a){bl.push({id:a.id,m:tmin(a.t),d:60,n:a.n,t:"a"})});
+ ap.forEach(function(a){bl.push({id:a.id,m:tmin(a.t),d:a.dur||60,n:a.n,t:"a"})});
  bl.sort(function(a,b){return a.m-b.m});var CL=[],CE=-1,CC=null;
  bl.forEach(function(b){var e=b.m+Math.max(b.d,20);if(!CC||b.m>=CE){CC={ends:[],bs:[]};CL.push(CC);CE=e}else CE=Math.max(CE,e);var l=0;while(CC.ends[l]!==undefined&&CC.ends[l]>b.m)l++;b.l=l;CC.ends[l]=e;CC.bs.push(b)});CL.forEach(function(c){c.bs.forEach(function(b){b.L=c.ends.length})});
  h+='<div id="tl" style="height:'+((T1-T0)/60*HP)+'px">';
@@ -342,7 +342,7 @@ function dag(){
  else h+='<p class="mut">'+(ex().some(function(e){return big(get(e.id))})?'Een grote klus is genoeg voor vandaag.':'3 klusjes, genoeg voor vandaag.')+'</p>';
  h+=weekCard();
  var jj=jget(ds());h+='<div class="card"><b>Dag afsluiten</b><p class="mut">'+(jj?'Je dag is afgesloten. Goed zo.':'Even terugkijken, duurt twee minuten.')+'</p><button class="btn s" data-cl="1" style="margin-top:8px">'+(jj?'Aanpassen':'Dag afsluiten')+'</button></div>';
- h+='<details class="card"><summary>'+ic("cal",18)+' Afspraken ('+ap.length+')</summary>'+ap.map(function(a){return'<div class="ap"><b>'+esc(a.t)+'</b><span>'+esc(a.n)+'</span><button class="x" data-ad2="'+a.id+'" aria-label="Verwijder">✕</button></div>'}).join("")+'<label for="at">Tijd</label><input id="at" type="time"><label for="an">Wat</label><input id="an"><label for="adt">Dag</label><input id="adt" type="date" value="'+ds()+'"><button class="btn" data-aa="1">Opslaan</button></details>';
+ h+='<details class="card"><summary>'+ic("cal",18)+' Afspraken ('+ap.length+')</summary>'+ap.map(function(a){return'<div class="ap"><b>'+esc(a.t)+'</b><span>'+esc(a.n)+'</span>'+(a.cal?'':'<button class="x" data-ad2="'+a.id+'" aria-label="Verwijder">✕</button>')+'</div>'}).join("")+'<label for="at">Tijd</label><input id="at" type="time"><label for="an">Wat</label><input id="an"><label for="adt">Dag</label><input id="adt" type="date" value="'+ds()+'"><button class="btn" data-aa="1">Opslaan</button></details>';
  return h;
 }
 function kies(){
@@ -424,6 +424,10 @@ function calSoon(){if(!NP)return;clearTimeout(NT);NT=setTimeout(function(){nativ
 function calWant(k){var s=(S.sched||{})[k]||{},du=(S.dur||{})[k]||{},lg=S.log[k]||[],pl=((S.plan||{})[k]||[]).map(function(e){return e.id}),hv=(S.heavy||{})[k],a=[];
  Object.keys(s).forEach(function(id){var x=get(id);if(!x||lg.indexOf(id)>-1)return;var ok=x.k=="routine"||x.k=="vast"||(!hv&&(x.k=="taak"?tdate(x)==k:x.k=="huis"&&pl.indexOf(id)>-1));if(!ok)return;var d=du[id]||mins(x);a.push({id:id,n:x.n,s:x.s||"",m:s[id],e:Math.min(s[id]+d,1439),d:d})});return a}
 function unplaced(){var s=sch(),n=0;S.items.forEach(function(x){if((x.k=="routine"||x.k=="vast")&&s[x.id]===undefined&&since(x.id)>0)n++});if(!HV()){ex().forEach(function(e){var x=get(e.id);if(x&&s[x.id]===undefined&&since(x.id)>0)n++});tt().forEach(function(x){if(s[x.id]===undefined&&since(x.id)>0)n++})}return n}
+var CEV={};
+function loadCal(){if(!NP||!NP.getEvents)return;var f0=new Date();f0.setHours(0,0,0,0);var f=f0.getTime()-14*864e5,t=f0.getTime()+180*864e5;NP.getEvents({from:f,to:t}).then(function(r){var m={};((r&&r.events)||[]).forEach(function(e){if(e.all)return;var d=new Date(e.s),k=dstr(d),mn=d.getHours()*60+d.getMinutes(),en=Math.min(Math.round((e.e-e.s)/60000),1440-mn);(m[k]=m[k]||[]).push({id:"cal:"+k+":"+mn+":"+m[k].length,t:hm(mn),n:e.n,dur:Math.max(15,en),cal:1})});CEV=m;if((tab=="dag"||tab=="week")&&scr=="start"&&!busy())render()}).catch(function(){})}
+function pfx(n){return n.toLowerCase().replace(/\s+/g," ").slice(0,10)}
+function appsOn(k){var c=CEV[k]||[],a=S.appts.filter(function(x){return x.d==k&&!c.some(function(e){return e.t==x.t&&pfx(e.n)==pfx(x.n)})});return a.concat(c)}
 function evMs(k,m){return new Date(k+"T"+hm(m)+":00").getTime()}
 function hsh(s){var h=7;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
 function nativeSync(force){if(!NP)return;
@@ -446,7 +450,7 @@ function checkDone(){if(!NP)return;NP.takeDone().then(function(r){applyDone(r&&r
 function CMSG0(){NMSG="Bezig met synchroniseren…"}
 function goTarget(t){if(!t)return;t=String(t).toLowerCase();var M={dag:"dag",week:"week",taken:"taken",inbox:"inbox",notities:"notes",dagboek:"jr",huis:"huis",routines:"routines",afsluiten:"dag",focus:"dag"},m=M[t];if(!m)return;
  tab=m;if(scr!="timer")scr="start";if(t=="afsluiten"&&scr!="timer")scr="close";if(t=="focus"&&scr!="timer"){skip=[];cur=pick();scr="kaart"}if(tab=="week")WSL=-1;scrollTo(0,0);render()}
-function checkTarget(){if(!NP)return;checkDone();NP.getTarget().then(function(r){if(r&&r.target)goTarget(r.target)}).catch(function(){})}
+function checkTarget(){if(!NP)return;checkDone();loadCal();NP.getTarget().then(function(r){if(r&&r.target)goTarget(r.target)}).catch(function(){})}
 function nativeCard(){var h='<h2>Agenda, herinneringen en widget</h2><div class="card">';
  if(!NP)return h+'<p class="mut">Dit werkt alleen in de Android-app.</p></div>';
  h+='<p class="mut">Blokken met een tijd komen in je Google Agenda (komende 7 dagen) en verdwijnen als je ze afvinkt. Alleen blokken met [Start] in de beschrijving worden aangepast. Je eigen afspraken blijven staan.</p>';
@@ -477,7 +481,7 @@ function weekView(){
  h+=(NOTE?'<p style="color:var(--ac)">'+esc(NOTE)+'</p>':'')+'<p class="mut" style="font-size:14px">Sleep een taak of huishoudklusje met ⠿ naar een andere dag (bovenin) of naar een tijd. Max. 3 per dag. Gestippeld = huishoudklusje dat die dag aan de beurt is.</p><div id="wkc">';
 var GH=(T1-T0)/60*HW,cols=[],mx=1;
  days.forEach(function(d){var k=dstr(d),sc=(S.sched||{})[k]||{},du=(S.dur||{})[k]||{},lg=S.log[k]||[],bl=[],st=[];
-  S.appts.filter(function(a){return a.d==k}).forEach(function(a){bl.push({m:tmin(a.t),d:60,n:a.n,t:"a"})});
+  appsOn(k).forEach(function(a){bl.push({m:tmin(a.t),d:a.dur||60,n:a.n,t:"a"})});
   Object.keys(sc).forEach(function(id){var x=get(id);if(!x||(x.k=="taak"&&tdate(x)!=k))return;bl.push({m:sc[id],d:du[id]||mins(x),n:x.n,x:x,t:"i",dn:lg.indexOf(id)>-1})});
   S.items.forEach(function(x){if(x.k=="taak"&&tdate(x)==k&&sc[x.id]===undefined)st.push('<div class="wt"><span>'+esc(x.n)+'</span><button class="hd" data-dt="'+x.id+'" aria-label="Sleep naar een andere dag">⠿</button></div>')});
   (S.plan[k]||[]).forEach(function(e){var x=get(e.id);if(x&&x.k=="huis"&&sc[x.id]===undefined)st.push('<div class="wh">'+ic("home",13)+'<span>'+esc(x.n)+'</span>'+(k>=td&&lg.indexOf(x.id)<0?'<button class="hd" data-dh="'+x.id+'|'+k+'" aria-label="Sleep naar een andere dag">⠿</button>':'')+'</div>')});
@@ -496,8 +500,8 @@ var GH=(T1-T0)/60*HW,cols=[],mx=1;
  h+='</div>';
  [[1,"Deze week, nog geen dag"],[2,"Volgende week"],[3,"Ooit"]].forEach(function(a){var ts=S.items.filter(function(x){return x.k=="taak"&&!tdate(x)&&x.b===a[0]});
   h+='<div class="card" data-bk="'+a[0]+'"><b>'+a[1]+' ('+ts.length+')</b><div class="tray">'+(ts.length?ts.map(function(x){return'<div class="chp"><button class="hd" data-dt="'+x.id+'" aria-label="Sleep naar een dag">⠿</button><span>'+esc(x.n)+'</span></div>'}).join(""):'<span class="mut">Leeg. Sleep hier een taak naartoe om hem van een dag te halen.</span>')+'</div></div>'});
- var wa=S.appts.filter(function(a){return a.d>=dstr(days[0])&&a.d<=dstr(days[6])}).sort(function(a,b){return a.d+a.t<b.d+b.t?-1:1});
- h+='<details class="card"><summary>'+ic("cal",18)+' Afspraken ('+wa.length+')</summary>'+wa.map(function(a){return'<div class="ap"><b>'+esc(a.t)+'</b><span>'+dlab(a.d)+' · '+esc(a.n)+'</span><button class="x" data-ad2="'+a.id+'" aria-label="Verwijder">✕</button></div>'}).join("")+'<label for="at">Tijd</label><input id="at" type="time"><label for="an">Wat</label><input id="an"><label for="adt">Dag</label><input id="adt" type="date" value="'+dstr(WK==0?new Date():days[0])+'"><button class="btn" data-aa="1">Opslaan</button></details>';
+ var wa=[];days.forEach(function(dy){appsOn(dstr(dy)).forEach(function(a){wa.push({id:a.id,t:a.t,n:a.n,d:dstr(dy),cal:a.cal})})});wa.sort(function(a,b){return a.d+a.t<b.d+b.t?-1:1});
+ h+='<details class="card"><summary>'+ic("cal",18)+' Afspraken ('+wa.length+')</summary>'+wa.map(function(a){return'<div class="ap"><b>'+esc(a.t)+'</b><span>'+dlab(a.d)+' · '+esc(a.n)+'</span>'+(a.cal?'':'<button class="x" data-ad2="'+a.id+'" aria-label="Verwijder">✕</button>')+'</div>'}).join("")+'<label for="at">Tijd</label><input id="at" type="time"><label for="an">Wat</label><input id="an"><label for="adt">Dag</label><input id="adt" type="date" value="'+dstr(WK==0?new Date():days[0])+'"><button class="btn" data-aa="1">Opslaan</button></details>';
  return h}
 function tick(){var e=document.getElementById("tm");if(e)e.textContent=String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0")}
 function stop(){if(T){clearInterval(T);T=null}}

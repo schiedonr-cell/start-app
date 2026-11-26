@@ -54,7 +54,7 @@ public class StartWidgetService extends RemoteViewsService {
                 cal.set(java.util.Calendar.SECOND, 0);
                 cal.set(java.util.Calendar.MILLISECOND, 0);
                 long from = cal.getTimeInMillis();
-                long to = from + 7L * 24 * 3600 * 1000;
+                long to = from + 90L * 24 * 3600 * 1000;
                 if (androidx.core.content.ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.READ_CALENDAR)
                         == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                     android.net.Uri.Builder ub = android.provider.CalendarContract.Instances.CONTENT_URI.buildUpon();

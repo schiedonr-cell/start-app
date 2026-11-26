@@ -109,6 +109,48 @@ public class StartNativePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void getEvents(PluginCall call) {
+        JSObject ret = new JSObject();
+        JSArray arr = new JSArray();
+        try {
+            if (getPermissionState("calendar") == PermissionState.GRANTED) {
+                long from = call.getData().optLong("from", 0);
+                long to = call.getData().optLong("to", 0);
+                Uri.Builder ub = CalendarContract.Instances.CONTENT_URI.buildUpon();
+                ContentUris.appendId(ub, from);
+                ContentUris.appendId(ub, to);
+                Cursor c = getContext().getContentResolver().query(ub.build(),
+                    new String[]{
+                        CalendarContract.Instances.TITLE,
+                        CalendarContract.Instances.BEGIN,
+                        CalendarContract.Instances.END,
+                        CalendarContract.Instances.ALL_DAY,
+                        CalendarContract.Instances.DESCRIPTION
+                    }, null, null, CalendarContract.Instances.BEGIN + " ASC");
+                if (c != null) {
+                    while (c.moveToNext()) {
+                        String desc = c.getString(4);
+                        if (desc != null && desc.contains("[Start]")) continue;
+                        String title = c.getString(0);
+                        if (title == null || title.length() == 0) title = "(geen titel)";
+                        JSObject o = new JSObject();
+                        o.put("n", title);
+                        o.put("s", c.getLong(1));
+                        o.put("e", c.getLong(2));
+                        o.put("all", c.getInt(3) == 1);
+                        arr.put(o);
+                    }
+                    c.close();
+                }
+            }
+        } catch (Exception e) {
+            // negeren
+        }
+        ret.put("events", arr);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
     public void refreshWidget(PluginCall call) {
         StartWidget.updateAll(getContext());
         call.resolve();
