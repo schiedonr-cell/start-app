@@ -429,16 +429,22 @@ function loadCal(){if(!NP||!NP.getEvents)return;var f0=new Date();f0.setHours(0,
 function pfx(n){return n.toLowerCase().replace(/\s+/g," ").slice(0,10)}
 function appsOn(k){var c=CEV[k]||[],a=S.appts.filter(function(x){return x.d==k&&!c.some(function(e){return e.t==x.t&&pfx(e.n)==pfx(x.n)})});return a.concat(c)}
 function evMs(k,m){return new Date(k+"T"+hm(m)+":00").getTime()}
+function openFor(k){var lg=S.log[k]||[],hv=(S.heavy||{})[k],sc=(S.sched||{})[k]||{},pl=((S.plan||{})[k]||[]).map(function(e){return e.id}),a=[];
+ S.items.forEach(function(x){var ok=x.k=="routine"||x.k=="vast"||(!hv&&(x.k=="taak"?tdate(x)==k:x.k=="huis"&&pl.indexOf(x.id)>-1));if(!ok||lg.indexOf(x.id)>-1)return;a.push({id:x.id,n:x.n,m:sc[x.id]===undefined?-1:sc[x.id],d:mins(x)})});return a}
+function nudgeItems(days){var out=[],ns=S.nudge;if(!ns||!ns.on)return out;var now=Date.now(),T=ns.t||["13:00","16:00","20:00"];
+ days.forEach(function(k){var op=openFor(k),hv=!!(S.heavy||{})[k];T.forEach(function(tm,slot){if(!tm)return;var tmn=tmin(tm),at=evMs(k,tmn);if(at<=now)return;
+  var near=op.filter(function(x){return x.m>=tmn-30&&x.m<=tmn+180}).sort(function(a,b){return a.m-b.m}),rest=op.filter(function(x){return near.indexOf(x)<0}).sort(function(a,b){return(a.m<0?1:0)-(b.m<0?1:0)||a.d-b.d}),c=near.concat(rest).slice(0,4).map(function(x){return{id:x.id,n:x.n,m:x.m}});
+  out.push({id:hsh("nudge"+k+slot),at:at,type:"nudge",slot:slot,heavy:hv?1:0,total:op.length,k:k,cands:c,title:"Start",text:""})})});return out}
 function hsh(s){var h=7;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
 function nativeSync(force){if(!NP)return;
  var days=[],W={},sig="",i;for(i=0;i<7;i++){var kd=dstr(addDays(new Date(),i));days.push(kd);W[kd]=calWant(kd);sig+=kd+JSON.stringify(W[kd].map(function(w){return[w.id,w.m,w.d]}))}
  var wi=[];days.forEach(function(k){var L=W[k].map(function(w){return{m:w.m,n:w.n,t:hm(w.m)+" – "+hm(w.e),a:0,id:w.id,ic:(function(x){return x&&x.k=="taak"?"check":x&&x.k=="routine"?"sync":"home"})(get(w.id))}});S.appts.filter(function(a){return a.d==k}).forEach(function(a){L.push({m:tmin(a.t),n:a.n,t:hm(tmin(a.t))+" – "+hm(tmin(a.t)+60),a:1})});L.sort(function(a,b){return a.m-b.m});L.forEach(function(q){var o={s:evMs(k,q.m),n:q.n,t:q.t,a:q.a,ic:q.ic||"cal"};if(q.id){o.id=q.id;o.k=k}wi.push(o)})});
- sig+=JSON.stringify(wi)+JSON.stringify(S.wstyle||{})+"|"+!!S.calsync+"|"+!!S.remind+"|"+(S.remmin==null?5:S.remmin);
+ var nz=nudgeItems(days);sig+=JSON.stringify(wi)+JSON.stringify(S.wstyle||{})+JSON.stringify(S.nudge||{})+JSON.stringify(nz)+"|"+!!S.calsync+"|"+!!S.remind+"|"+(S.remmin==null?5:S.remmin);
  if(!force&&sig===NSIG)return;if(NB){NQ=true;return}
  NB=true;NSIG=sig;var jobs=[];
  jobs.push(NP.setWidgetStyle(wsArgs()).catch(function(){}));jobs.push(NP.setWidget({items:wi}).catch(function(){}));
  var its=[];if(S.remind){var now=Date.now(),rm=(S.remmin==null?5:S.remmin)*60000;days.forEach(function(k){W[k].forEach(function(w){var at=evMs(k,w.m)-rm;if(at>now)its.push({id:hsh(k+w.id),title:w.n,text:"Eerste stap: "+w.s,at:at})})})}
- jobs.push(NP.setReminders({items:its}).catch(function(){}));
+ nz.forEach(function(q){its.push(q)});jobs.push(NP.setReminders({items:its}).catch(function(){}));
  if(S.calsync){var ev=[];days.forEach(function(k){W[k].forEach(function(w){ev.push({title:w.n,desc:"Eerste stap: "+w.s+"\n\n[Start]",start:evMs(k,w.m),end:evMs(k,w.e>w.m?w.e:w.m+5)})})});
   CMSG0();jobs.push(NP.syncCalendar({events:ev,from:evMs(days[0],0),to:evMs(days[6],1439)}).then(function(r){var n=new Date();NMSG="Agenda bijgewerkt om "+hm(n.getHours()*60+n.getMinutes())+(r&&r.calendar?" (agenda: "+r.calendar+")":"")+"."}).catch(function(er){NMSG=(er&&er.message)?("Agenda: "+er.message):"Agenda synchroniseren lukt nu niet."}))}
  Promise.all(jobs).then(function(){NB=false;if(NQ){NQ=false;calSoon()}if(tab=="inst"&&scr=="start"&&!busy())render()})}
@@ -459,6 +465,8 @@ function nativeCard(){var h='<h2>Agenda, herinneringen en widget</h2><div class=
  if(NMSG)h+='<p class="mut" style="margin-top:8px">'+esc(NMSG)+'</p>';
  h+='<button class="btn'+(S.remind?' s':'')+'" data-rem="1" style="margin-top:14px">'+(S.remind?'Herinneringen aan. Tik om uit te zetten':'Zet herinneringen aan')+'</button>';
  if(S.remind)h+='<label for="rmm" style="display:block;margin-top:8px">Hoeveel minuten van tevoren</label><div class="row" style="flex-wrap:nowrap"><input id="rmm" type="number" value="'+(S.remmin==null?5:S.remmin)+'" style="margin:0"><button class="sm" data-rmm="1">Opslaan</button></div>';
+ var nd=S.nudge||{on:false,t:["13:00","16:00","20:00"]};h+='<button class="btn'+(nd.on?' s':'')+'" data-nud="1" style="margin-top:14px">'+(nd.on?'Vriendelijke herinneringen aan. Tik om uit te zetten':'Zet vriendelijke herinneringen aan (3x per dag)')+'</button><p class="mut" style="margin-top:6px">Een korte, lieve melding met wat er nog openstaat, zonder dat je de app hoeft te openen.</p>';
+ if(nd.on){h+='<div class="row" style="flex-wrap:nowrap;margin-top:8px">'+[0,1,2].map(function(i){return'<input id="nt'+i+'" type="time" value="'+((nd.t||[])[i]||["13:00","16:00","20:00"][i])+'" style="margin:0">'}).join("")+'</div><button class="sm" data-ntv="1" style="margin-top:8px">Tijden opslaan</button>'}
  h+='<p class="mut" style="margin-top:14px">Snelkoppeling op je beginscherm zetten:</p><div class="row"><button class="sm s" data-pin="inbox">Inbox</button><button class="sm s" data-pin="notities">Notities</button><button class="sm s" data-pin="focus">Wat nu?</button><button class="sm s" data-pin="dag">Dag</button></div>';
  h+='<p class="mut" style="margin-top:14px">Widget: houd een lege plek op je beginscherm ingedrukt, kies Widgets en zoek Start. Houd je het icoon van de app ingedrukt, dan zie je ook snelkoppelingen naar Inbox, Notities en Wat nu?.</p></div>';
  return h}
@@ -510,6 +518,8 @@ function record(rm){stop();var k=ds();S.log[k]=S.log[k]||[];if(S.log[k].indexOf(
 document.addEventListener("click",function(e){
  var t=e.target.closest("button");if(!t)return;var d=t.dataset;NOTE="";
  if(d.t){tab=d.t;if(scr!="timer")scr="start";if(tab=="week")WSL=-1;scrollTo(0,0);render()}
+ else if(d.nud){S.nudge=S.nudge||{on:false,t:["13:00","16:00","20:00"]};S.nudge.on=!S.nudge.on;save();if(S.nudge.on&&NP)NP.requestNotif().catch(function(){});nativeSync(true);render()}
+ else if(d.ntv){S.nudge=S.nudge||{on:true};S.nudge.t=[0,1,2].map(function(i){var e=document.getElementById("nt"+i);return e&&e.value?e.value:["13:00","16:00","20:00"][i]});save();nativeSync(true);t.textContent="Opgeslagen"}
  else if(d.wrs){delete S.wstyle;save();wsSoon();render()}
  else if(d.wpre){S.wstyle=d.wpre=="light"?{bg:"#ffffff",al:80,tx:"#17282b",ac:"#0f6e6e"}:d.wpre=="dark"?{bg:"#182528",al:70,tx:"#eaf2f0",ac:"#e8b65c"}:{bg:"#0b0b0b",al:55,tx:"#e6d3a8",ac:"#d9b26a"};save();wsSoon();render()}
  else if(d.cs){S.calsync=!S.calsync;NMSG="";save();if(S.calsync)nativeSync(true);render()}
@@ -640,7 +650,7 @@ window.addEventListener("hashchange",function(){route()});
 document.addEventListener("input",function(e){var wid=e.target.id;if(wid=="wal"||wid=="wbg"||wid=="wtx"||wid=="wac"){S.wstyle=S.wstyle||{};var wv=e.target.value;if(wid=="wal"){S.wstyle.al=+wv;var lv=document.getElementById("walv");if(lv)lv.textContent=wv+"%"}else if(wid=="wbg")S.wstyle.bg=wv;else if(wid=="wtx")S.wstyle.tx=wv;else S.wstyle.ac=wv;save();wsSoon()}});
 document.addEventListener("input",function(e){if(e.target.id=="acc"){S.th=S.th||{p:"auto"};S.th.ac=e.target.value;applyTheme();save()}});
 document.addEventListener("resume",checkTarget);
-document.addEventListener("visibilitychange",function(){if(!document.hidden){checkTarget();if(NP)NP.refreshWidget().catch(function(){});render()}});
+document.addEventListener("visibilitychange",function(){if(!document.hidden){calSoon();checkTarget();if(NP)NP.refreshWidget().catch(function(){});render()}});
 applyTheme();
 render();
 route();
