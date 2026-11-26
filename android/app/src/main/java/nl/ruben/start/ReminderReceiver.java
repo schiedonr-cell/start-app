@@ -44,6 +44,10 @@ public class ReminderReceiver extends BroadcastReceiver {
         open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
         PendingIntent pi = PendingIntent.getActivity(context, id, open, flags);
+        Intent now = new Intent(Intent.ACTION_VIEW, Uri.parse("start://focus"));
+        now.setClass(context, MainActivity.class);
+        now.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pn = PendingIntent.getActivity(context, id + 7000, now, flags);
         NotificationCompat.Builder b = new NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat)
             .setContentTitle(title)
@@ -51,7 +55,8 @@ public class ReminderReceiver extends BroadcastReceiver {
             .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .setContentIntent(pi);
+            .addAction(0, "Wat nu?", pn)
+            .addAction(0, "Open Start", pi);
         try {
             NotificationManagerCompat.from(context).notify(id, b.build());
         } catch (SecurityException e) {
