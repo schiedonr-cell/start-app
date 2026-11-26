@@ -418,7 +418,7 @@ function huis(){
  h+='<details class="card"><summary>Nieuw huishoudklusje</summary><label for="nn">Naam</label><input id="nn"><label for="ns">Eerste stap (heel klein)</label><input id="ns"><label for="nl">Energie die ervoor nodig is</label><select id="nl"><option value="0">Laag</option><option value="1">Midden</option><option value="2">Hoog</option></select><input id="nk" type="hidden" value="huis"><label for="nm">Minuten (bij hoge energie)</label><input id="nm" type="number" value="15"><label for="nv">Herhaalt elke ... dagen (leeg = elke 7 dagen)</label><input id="nv" type="number"><label for="ng">Grote klus?</label><select id="ng"><option value="0">Nee, telt als 1 van de 3</option><option value="1">Ja, dan alleen deze klus die dag</option></select><button class="btn" data-add="1">Toevoegen</button></details>';
  return h}
 /* ===== Android-koppeling ===== */
-var NP=null;try{if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())NP=Capacitor.registerPlugin("StartNative")}catch(x){}
+var NP=null;try{if(window.Capacitor){if(Capacitor.Plugins&&Capacitor.Plugins.StartNative)NP=Capacitor.Plugins.StartNative;else if(Capacitor.registerPlugin)NP=Capacitor.registerPlugin("StartNative")}}catch(x){}
 var NT=null,NB=false,NQ=false,NMSG="",NSIG="",IMSG="";
 function calSoon(){if(!NP)return;clearTimeout(NT);NT=setTimeout(function(){nativeSync()},1200)}
 function calWant(k){var s=(S.sched||{})[k]||{},du=(S.dur||{})[k]||{},lg=S.log[k]||[],pl=((S.plan||{})[k]||[]).map(function(e){return e.id}),hv=(S.heavy||{})[k],a=[];
