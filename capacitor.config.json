@@ -1,0 +1,6 @@
+{
+  "appId": "nl.ruben.start",
+  "appName": "Start",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}

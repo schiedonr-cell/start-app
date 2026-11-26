@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="focus"
+        android:enabled="true"
+        android:icon="@drawable/ic_sc_focus"
+        android:shortcutShortLabel="@string/sc_focus"
+        android:shortcutLongLabel="@string/sc_focus_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="start://focus"
+            android:targetClass="nl.ruben.start.MainActivity"
+            android:targetPackage="nl.ruben.start" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="notities"
+        android:enabled="true"
+        android:icon="@drawable/ic_sc_notes"
+        android:shortcutShortLabel="@string/sc_notes"
+        android:shortcutLongLabel="@string/sc_notes_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="start://notities"
+            android:targetClass="nl.ruben.start.MainActivity"
+            android:targetPackage="nl.ruben.start" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="inbox"
+        android:enabled="true"
+        android:icon="@drawable/ic_sc_inbox"
+        android:shortcutShortLabel="@string/sc_inbox"
+        android:shortcutLongLabel="@string/sc_inbox_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="start://inbox"
+            android:targetClass="nl.ruben.start.MainActivity"
+            android:targetPackage="nl.ruben.start" />
+    </shortcut>
+</shortcuts>

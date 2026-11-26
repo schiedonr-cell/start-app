@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Start</string>
+    <string name="title_activity_main">Start</string>
+    <string name="package_name">nl.ruben.start</string>
+    <string name="custom_url_scheme">nl.ruben.start</string>
+    <string name="widget_desc">Je planning van vandaag met knoppen naar Inbox, Notities en Wat nu?</string>
+    <string name="sc_focus">Wat nu?</string>
+    <string name="sc_focus_long">Wat nu? (Start)</string>
+    <string name="sc_notes">Notities</string>
+    <string name="sc_notes_long">Notities (Start)</string>
+    <string name="sc_inbox">Inbox</string>
+    <string name="sc_inbox_long">Inbox (Start)</string>
+</resources>
