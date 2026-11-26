@@ -428,7 +428,7 @@ function evMs(k,m){return new Date(k+"T"+hm(m)+":00").getTime()}
 function hsh(s){var h=7;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
 function nativeSync(force){if(!NP)return;
  var days=[],W={},sig="",i;for(i=0;i<7;i++){var kd=dstr(addDays(new Date(),i));days.push(kd);W[kd]=calWant(kd);sig+=kd+JSON.stringify(W[kd].map(function(w){return[w.id,w.m,w.d]}))}
- var wi=[],un=unplaced();days.forEach(function(k,di){var L=W[k].map(function(w){return{m:w.m,n:w.n,t:hm(w.m)+" – "+hm(w.e),a:0}});S.appts.filter(function(a){return a.d==k}).forEach(function(a){L.push({m:tmin(a.t),n:a.n,t:hm(tmin(a.t))+" – "+hm(tmin(a.t)+60),a:1})});L.sort(function(a,b){return a.m-b.m});var dd=new Date(k+"T12:00:00"),dl=di==0?"Vandaag":di==1?"Morgen":dd.toLocaleDateString("nl-NL",{weekday:"long"}),dn=dd.toLocaleDateString("nl-NL",{day:"numeric",month:"short"});L.forEach(function(q,qi){wi.push({d:qi==0?dn:"",l:qi==0?dl:"",n:q.n,t:q.t,a:q.a})})});
+ var wi=[];days.forEach(function(k){var L=W[k].map(function(w){return{m:w.m,n:w.n,t:hm(w.m)+" – "+hm(w.e),a:0}});S.appts.filter(function(a){return a.d==k}).forEach(function(a){L.push({m:tmin(a.t),n:a.n,t:hm(tmin(a.t))+" – "+hm(tmin(a.t)+60),a:1})});L.sort(function(a,b){return a.m-b.m});L.forEach(function(q){wi.push({s:evMs(k,q.m),n:q.n,t:q.t,a:q.a})})});
  sig+=JSON.stringify(wi)+"|"+!!S.calsync+"|"+!!S.remind+"|"+(S.remmin==null?5:S.remmin);
  if(!force&&sig===NSIG)return;if(NB){NQ=true;return}
  NB=true;NSIG=sig;var jobs=[];
@@ -627,7 +627,7 @@ function route(){var h=(location.hash||"").replace("#","").toLowerCase();if(!h)r
 window.addEventListener("hashchange",function(){route()});
 document.addEventListener("input",function(e){if(e.target.id=="acc"){S.th=S.th||{p:"auto"};S.th.ac=e.target.value;applyTheme();save()}});
 document.addEventListener("resume",checkTarget);
-document.addEventListener("visibilitychange",function(){if(!document.hidden){checkTarget();render()}});
+document.addEventListener("visibilitychange",function(){if(!document.hidden){checkTarget();if(NP)NP.refreshWidget().catch(function(){});render()}});
 applyTheme();
 render();
 route();

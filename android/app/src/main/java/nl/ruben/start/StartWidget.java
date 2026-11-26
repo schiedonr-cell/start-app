@@ -16,6 +16,7 @@ public class StartWidget extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager mgr, int[] ids) {
         for (int id : ids) mgr.updateAppWidget(id, build(context));
+        if (ids.length > 0) mgr.notifyAppWidgetViewDataChanged(ids, R.id.w_list);
     }
 
     static void updateAll(Context context) {

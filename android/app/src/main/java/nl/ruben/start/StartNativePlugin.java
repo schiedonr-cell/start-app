@@ -78,6 +78,12 @@ public class StartNativePlugin extends Plugin {
         call.resolve();
     }
 
+    @PluginMethod
+    public void refreshWidget(PluginCall call) {
+        StartWidget.updateAll(getContext());
+        call.resolve();
+    }
+
     // ---------- Herinneringen ----------
     @PluginMethod
     public void requestNotif(PluginCall call) {
