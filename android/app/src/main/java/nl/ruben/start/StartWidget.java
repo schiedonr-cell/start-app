@@ -53,7 +53,6 @@ public class StartWidget extends AppWidgetProvider {
         v.setInt(R.id.w_bg, "setColorFilter", bg);
         v.setInt(R.id.w_bg, "setImageAlpha", Math.round(alpha * 2.55f));
         v.setTextColor(R.id.w_empty, text);
-        v.setTextColor(R.id.w_day, acc);
         v.setTextColor(R.id.w_inbox, acc);
         v.setTextColor(R.id.w_notes, acc);
         v.setTextColor(R.id.w_focus, acc);
@@ -65,7 +64,6 @@ public class StartWidget extends AppWidgetProvider {
         int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
         v.setPendingIntentTemplate(R.id.w_list, PendingIntent.getActivity(c, 9, tpl, flags));
         v.setOnClickPendingIntent(R.id.w_empty, link(c, "dag", 11));
-        v.setOnClickPendingIntent(R.id.w_day, link(c, "dag", 12));
         v.setOnClickPendingIntent(R.id.w_inbox, link(c, "inbox", 13));
         v.setOnClickPendingIntent(R.id.w_notes, link(c, "notities", 14));
         v.setOnClickPendingIntent(R.id.w_focus, link(c, "focus", 15));
