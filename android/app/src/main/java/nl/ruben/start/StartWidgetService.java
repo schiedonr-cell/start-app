@@ -26,7 +26,7 @@ public class StartWidgetService extends RemoteViewsService {
         }
 
         private static class Row {
-            long ms; String n; String t; int a; boolean allDay; String id; String k;
+            long ms; String n; String t; int a; boolean allDay; String id; String k; String ic = "cal";
         }
 
         private void load() {
@@ -43,6 +43,7 @@ public class StartWidgetService extends RemoteViewsService {
                     r.n = o.optString("n");
                     r.t = o.optString("t");
                     r.a = o.optInt("a", 0);
+                    r.ic = o.optString("ic", "cal");
                     r.id = o.optString("id", "");
                     r.k = o.optString("k", "");
                     rows.add(r);
@@ -137,6 +138,7 @@ public class StartWidgetService extends RemoteViewsService {
                     o.put("n", r.n);
                     o.put("t", r.t);
                     o.put("a", r.a);
+                    o.put("ic", r.ic);
                     if (r.id != null && r.id.length() > 0) {
                         o.put("id", r.id);
                         o.put("k", r.k);
@@ -169,6 +171,10 @@ public class StartWidgetService extends RemoteViewsService {
                 v.setTextColor(R.id.i_time, soft);
                 v.setTextColor(R.id.i_check, acc);
                 v.setTextViewText(R.id.i_date, d.length() > 0 ? (d + "\n" + l) : "");
+                String icn = o.optString("ic", "cal");
+                int icr = "home".equals(icn) ? R.drawable.ic_w_home : "check".equals(icn) ? R.drawable.ic_w_check : "sync".equals(icn) ? R.drawable.ic_w_sync : R.drawable.ic_w_cal;
+                v.setImageViewResource(R.id.i_icon, icr);
+                v.setInt(R.id.i_icon, "setColorFilter", o.optInt("a", 0) == 1 ? soft : acc);
                 v.setTextViewText(R.id.i_title, o.optString("n"));
                 v.setTextViewText(R.id.i_time, o.optString("t"));
                 v.setInt(R.id.i_bar, "setBackgroundColor", o.optInt("a", 0) == 1 ? soft : acc);
