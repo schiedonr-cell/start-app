@@ -39,6 +39,11 @@
                 android:resource="@xml/start_widget_info" />
         </receiver>
 
+        <service
+            android:name=".StartWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
         <receiver
             android:name=".ReminderReceiver"
             android:exported="false" />

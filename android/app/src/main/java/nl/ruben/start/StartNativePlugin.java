@@ -63,21 +63,17 @@ public class StartNativePlugin extends Plugin {
     // ---------- Widget ----------
     @PluginMethod
     public void setWidget(PluginCall call) {
-        JSArray lines = call.getArray("lines");
-        int more = call.getInt("more", 0);
-        StringBuilder sb = new StringBuilder();
+        JSArray items = call.getArray("items");
+        JSONArray arr = new JSONArray();
         try {
-            if (lines != null) {
-                for (int i = 0; i < lines.length(); i++) {
-                    if (i > 0) sb.append("\n");
-                    sb.append(lines.getString(i));
-                }
+            if (items != null) {
+                for (int i = 0; i < items.length(); i++) arr.put(items.getJSONObject(i));
             }
         } catch (Exception e) {
             // negeren
         }
         SharedPreferences sp = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        sp.edit().putString("widget_text", sb.toString()).putInt("widget_more", more).apply();
+        sp.edit().putString("widget_items", arr.toString()).apply();
         StartWidget.updateAll(getContext());
         call.resolve();
     }

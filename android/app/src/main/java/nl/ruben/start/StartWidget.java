@@ -22,6 +22,7 @@ public class StartWidget extends AppWidgetProvider {
         AppWidgetManager mgr = AppWidgetManager.getInstance(context);
         int[] ids = mgr.getAppWidgetIds(new ComponentName(context, StartWidget.class));
         for (int id : ids) mgr.updateAppWidget(id, build(context));
+        if (ids.length > 0) mgr.notifyAppWidgetViewDataChanged(ids, R.id.w_list);
     }
 
     static PendingIntent link(Context c, String target, int code) {
@@ -33,19 +34,16 @@ public class StartWidget extends AppWidgetProvider {
     }
 
     static RemoteViews build(Context c) {
-        SharedPreferences sp = c.getSharedPreferences(StartNativePlugin.PREFS, Context.MODE_PRIVATE);
-        String text = sp.getString("widget_text", "");
-        int more = sp.getInt("widget_more", 0);
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_start);
-        String body = text;
-        if (body == null || body.length() == 0) {
-            body = more > 0 ? "Nog niets ingepland." : "Niets meer te doen. Fijn.";
-        }
-        v.setTextViewText(R.id.w_body, body);
-        v.setTextViewText(R.id.w_more, more > 0 ? (more + " zonder tijd, tik om te plaatsen") : "");
-        v.setOnClickPendingIntent(R.id.w_root, link(c, "dag", 10));
-        v.setOnClickPendingIntent(R.id.w_body, link(c, "dag", 11));
-        v.setOnClickPendingIntent(R.id.w_title, link(c, "dag", 12));
+        Intent svc = new Intent(c, StartWidgetService.class);
+        v.setRemoteAdapter(R.id.w_list, svc);
+        v.setEmptyView(R.id.w_list, R.id.w_empty);
+        Intent tpl = new Intent(Intent.ACTION_VIEW);
+        tpl.setClass(c, MainActivity.class);
+        tpl.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
+        v.setPendingIntentTemplate(R.id.w_list, PendingIntent.getActivity(c, 9, tpl, flags));
+        v.setOnClickPendingIntent(R.id.w_empty, link(c, "dag", 11));
         v.setOnClickPendingIntent(R.id.w_inbox, link(c, "inbox", 13));
         v.setOnClickPendingIntent(R.id.w_notes, link(c, "notities", 14));
         v.setOnClickPendingIntent(R.id.w_focus, link(c, "focus", 15));
