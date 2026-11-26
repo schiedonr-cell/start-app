@@ -79,6 +79,36 @@ public class StartNativePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void setWidgetStyle(PluginCall call) {
+        SharedPreferences sp = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor ed = sp.edit();
+        String bg = call.getString("bg");
+        String tx = call.getString("text");
+        String ac = call.getString("acc");
+        if (bg != null) ed.putString("w_bg", bg);
+        if (tx != null) ed.putString("w_text", tx);
+        if (ac != null) ed.putString("w_acc", ac);
+        Integer al = call.getInt("alpha");
+        if (al != null) ed.putInt("w_alpha", al);
+        ed.apply();
+        StartWidget.updateAll(getContext());
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void takeDone(PluginCall call) {
+        SharedPreferences sp = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        JSObject ret = new JSObject();
+        try {
+            ret.put("items", new JSArray(sp.getString("widget_done", "[]")));
+        } catch (Exception e) {
+            ret.put("items", new JSArray());
+        }
+        sp.edit().putString("widget_done", "[]").apply();
+        call.resolve(ret);
+    }
+
+    @PluginMethod
     public void refreshWidget(PluginCall call) {
         StartWidget.updateAll(getContext());
         call.resolve();

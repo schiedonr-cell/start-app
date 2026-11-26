@@ -48,4 +48,14 @@
             android:textColor="#C3D1CF"
             android:textSize="14sp" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/i_check"
+        android:layout_width="48dp"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="✓"
+        android:textColor="#E8B65C"
+        android:textSize="22sp"
+        android:textStyle="bold" />
 </LinearLayout>

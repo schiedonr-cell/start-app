@@ -26,7 +26,7 @@ public class StartWidgetService extends RemoteViewsService {
         }
 
         private static class Row {
-            long ms; String n; String t; int a; boolean allDay;
+            long ms; String n; String t; int a; boolean allDay; String id; String k;
         }
 
         private void load() {
@@ -43,6 +43,8 @@ public class StartWidgetService extends RemoteViewsService {
                     r.n = o.optString("n");
                     r.t = o.optString("t");
                     r.a = o.optInt("a", 0);
+                    r.id = o.optString("id", "");
+                    r.k = o.optString("k", "");
                     rows.add(r);
                 }
                 java.util.Calendar cal = java.util.Calendar.getInstance();
@@ -90,13 +92,18 @@ public class StartWidgetService extends RemoteViewsService {
                                 r.ms = b;
                                 r.t = hm.format(new java.util.Date(b)) + " \u2013 " + hm.format(new java.util.Date(e));
                             }
-                            // dubbele afspraken (zelfde titel en tijd) overslaan
-                            boolean dup = false;
+                            // dubbele afspraken (zelfde tijd, begin van de titel gelijk) overslaan
+                            String pr = r.n.toLowerCase().replaceAll("\\s+", " ");
+                            pr = pr.length() > 10 ? pr.substring(0, 10) : pr;
                             for (int i = rows.size() - 1; i >= 0; i--) {
                                 Row q = rows.get(i);
-                                if (q.ms == r.ms && q.n.equalsIgnoreCase(r.n)) {
-                                    rows.remove(i);
-                                    break;
+                                if (q.a == 1 && (q.id == null || q.id.length() == 0) && q.ms == r.ms) {
+                                    String qp = q.n.toLowerCase().replaceAll("\\s+", " ");
+                                    qp = qp.length() > 10 ? qp.substring(0, 10) : qp;
+                                    if (qp.equals(pr)) {
+                                        rows.remove(i);
+                                        break;
+                                    }
                                 }
                             }
                             rows.add(r);
@@ -130,6 +137,10 @@ public class StartWidgetService extends RemoteViewsService {
                     o.put("n", r.n);
                     o.put("t", r.t);
                     o.put("a", r.a);
+                    if (r.id != null && r.id.length() > 0) {
+                        o.put("id", r.id);
+                        o.put("k", r.k);
+                    }
                     items.put(o);
                 }
             } catch (Exception e) {
@@ -149,15 +160,34 @@ public class StartWidgetService extends RemoteViewsService {
                 JSONObject o = items.getJSONObject(position);
                 String d = o.optString("d", "");
                 String l = o.optString("l", "");
+                android.content.SharedPreferences sp = ctx.getSharedPreferences(StartNativePlugin.PREFS, Context.MODE_PRIVATE);
+                int text = StartWidget.color(sp, "w_text", "#EAF2F0");
+                int acc = StartWidget.color(sp, "w_acc", "#E8B65C");
+                int soft = (text & 0x00FFFFFF) | 0xC0000000;
+                v.setTextColor(R.id.i_date, text);
+                v.setTextColor(R.id.i_title, text);
+                v.setTextColor(R.id.i_time, soft);
+                v.setTextColor(R.id.i_check, acc);
                 v.setTextViewText(R.id.i_date, d.length() > 0 ? (d + "\n" + l) : "");
                 v.setTextViewText(R.id.i_title, o.optString("n"));
                 v.setTextViewText(R.id.i_time, o.optString("t"));
-                v.setInt(R.id.i_bar, "setBackgroundColor", o.optInt("a", 0) == 1 ? Color.parseColor("#9AB2B0") : Color.parseColor("#E8B65C"));
+                v.setInt(R.id.i_bar, "setBackgroundColor", o.optInt("a", 0) == 1 ? soft : acc);
                 Intent fill = new Intent();
-                fill.setData(Uri.parse("start://dag"));
+                fill.putExtra("act", "open");
                 v.setOnClickFillInIntent(R.id.i_title, fill);
                 v.setOnClickFillInIntent(R.id.i_time, fill);
                 v.setOnClickFillInIntent(R.id.i_date, fill);
+                String id = o.optString("id", "");
+                if (id.length() > 0) {
+                    Intent dn = new Intent();
+                    dn.putExtra("act", "done");
+                    dn.putExtra("id", id);
+                    dn.putExtra("k", o.optString("k", ""));
+                    v.setOnClickFillInIntent(R.id.i_check, dn);
+                    v.setViewVisibility(R.id.i_check, android.view.View.VISIBLE);
+                } else {
+                    v.setViewVisibility(R.id.i_check, android.view.View.GONE);
+                }
             } catch (Exception e) {
                 // negeren
             }

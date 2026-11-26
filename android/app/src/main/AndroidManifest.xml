@@ -39,6 +39,14 @@
                 android:resource="@xml/start_widget_info" />
         </receiver>
 
+        <activity
+            android:name=".WidgetActionActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <service
             android:name=".StartWidgetService"
             android:exported="false"

@@ -428,20 +428,25 @@ function evMs(k,m){return new Date(k+"T"+hm(m)+":00").getTime()}
 function hsh(s){var h=7;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
 function nativeSync(force){if(!NP)return;
  var days=[],W={},sig="",i;for(i=0;i<7;i++){var kd=dstr(addDays(new Date(),i));days.push(kd);W[kd]=calWant(kd);sig+=kd+JSON.stringify(W[kd].map(function(w){return[w.id,w.m,w.d]}))}
- var wi=[];days.forEach(function(k){var L=W[k].map(function(w){return{m:w.m,n:w.n,t:hm(w.m)+" – "+hm(w.e),a:0}});S.appts.filter(function(a){return a.d==k}).forEach(function(a){L.push({m:tmin(a.t),n:a.n,t:hm(tmin(a.t))+" – "+hm(tmin(a.t)+60),a:1})});L.sort(function(a,b){return a.m-b.m});L.forEach(function(q){wi.push({s:evMs(k,q.m),n:q.n,t:q.t,a:q.a})})});
- sig+=JSON.stringify(wi)+"|"+!!S.calsync+"|"+!!S.remind+"|"+(S.remmin==null?5:S.remmin);
+ var wi=[];days.forEach(function(k){var L=W[k].map(function(w){return{m:w.m,n:w.n,t:hm(w.m)+" – "+hm(w.e),a:0,id:w.id}});S.appts.filter(function(a){return a.d==k}).forEach(function(a){L.push({m:tmin(a.t),n:a.n,t:hm(tmin(a.t))+" – "+hm(tmin(a.t)+60),a:1})});L.sort(function(a,b){return a.m-b.m});L.forEach(function(q){var o={s:evMs(k,q.m),n:q.n,t:q.t,a:q.a};if(q.id){o.id=q.id;o.k=k}wi.push(o)})});
+ sig+=JSON.stringify(wi)+JSON.stringify(S.wstyle||{})+"|"+!!S.calsync+"|"+!!S.remind+"|"+(S.remmin==null?5:S.remmin);
  if(!force&&sig===NSIG)return;if(NB){NQ=true;return}
  NB=true;NSIG=sig;var jobs=[];
- jobs.push(NP.setWidget({items:wi}).catch(function(){}));
+ jobs.push(NP.setWidgetStyle(wsArgs()).catch(function(){}));jobs.push(NP.setWidget({items:wi}).catch(function(){}));
  var its=[];if(S.remind){var now=Date.now(),rm=(S.remmin==null?5:S.remmin)*60000;days.forEach(function(k){W[k].forEach(function(w){var at=evMs(k,w.m)-rm;if(at>now)its.push({id:hsh(k+w.id),title:w.n,text:"Eerste stap: "+w.s,at:at})})})}
  jobs.push(NP.setReminders({items:its}).catch(function(){}));
  if(S.calsync){var ev=[];days.forEach(function(k){W[k].forEach(function(w){ev.push({title:w.n,desc:"Eerste stap: "+w.s+"\n\n[Start]",start:evMs(k,w.m),end:evMs(k,w.e>w.m?w.e:w.m+5)})})});
   CMSG0();jobs.push(NP.syncCalendar({events:ev,from:evMs(days[0],0),to:evMs(days[6],1439)}).then(function(r){var n=new Date();NMSG="Agenda bijgewerkt om "+hm(n.getHours()*60+n.getMinutes())+(r&&r.calendar?" (agenda: "+r.calendar+")":"")+"."}).catch(function(er){NMSG=(er&&er.message)?("Agenda: "+er.message):"Agenda synchroniseren lukt nu niet."}))}
  Promise.all(jobs).then(function(){NB=false;if(NQ){NQ=false;calSoon()}if(tab=="inst"&&scr=="start"&&!busy())render()})}
+function wsv(){var w=S.wstyle||{};return{bg:w.bg||"#182528",al:w.al==null?70:w.al,tx:w.tx||"#EAF2F0",ac:w.ac||"#E8B65C"}}
+function wsArgs(){var w=wsv();return{bg:w.bg,text:w.tx,acc:w.ac,alpha:+w.al}}
+var WST2=null;function wsSoon(){if(!NP)return;clearTimeout(WST2);WST2=setTimeout(function(){NP.setWidgetStyle(wsArgs()).catch(function(){})},300)}
+function applyDone(list){if(!list||!list.length)return;list.forEach(function(q){var x=get(q.id);if(!x)return;var k=q.k;S.log[k]=S.log[k]||[];if(S.log[k].indexOf(x.id)<0)S.log[k].push(x.id);S.mn=S.mn||{};S.mn[k]=(S.mn[k]||0)+mins(x);if(x.k=="taak"){S.dn=S.dn||[];S.dn.unshift({item:x,d:k});S.dn=S.dn.slice(0,8);S.items=S.items.filter(function(z){return z.id!=x.id})}});save();NSIG="";render()}
+function checkDone(){if(!NP)return;NP.takeDone().then(function(r){applyDone(r&&r.items)}).catch(function(){})}
 function CMSG0(){NMSG="Bezig met synchroniseren…"}
 function goTarget(t){if(!t)return;t=String(t).toLowerCase();var M={dag:"dag",week:"week",taken:"taken",inbox:"inbox",notities:"notes",dagboek:"jr",huis:"huis",routines:"routines",afsluiten:"dag",focus:"dag"},m=M[t];if(!m)return;
  tab=m;if(scr!="timer")scr="start";if(t=="afsluiten"&&scr!="timer")scr="close";if(t=="focus"&&scr!="timer"){skip=[];cur=pick();scr="kaart"}if(tab=="week")WSL=-1;scrollTo(0,0);render()}
-function checkTarget(){if(!NP)return;NP.getTarget().then(function(r){if(r&&r.target)goTarget(r.target)}).catch(function(){})}
+function checkTarget(){if(!NP)return;checkDone();NP.getTarget().then(function(r){if(r&&r.target)goTarget(r.target)}).catch(function(){})}
 function nativeCard(){var h='<h2>Agenda, herinneringen en widget</h2><div class="card">';
  if(!NP)return h+'<p class="mut">Dit werkt alleen in de Android-app.</p></div>';
  h+='<p class="mut">Blokken met een tijd komen in je Google Agenda (komende 7 dagen) en verdwijnen als je ze afvinkt. Alleen blokken met [Start] in de beschrijving worden aangepast. Je eigen afspraken blijven staan.</p>';
@@ -453,9 +458,10 @@ function nativeCard(){var h='<h2>Agenda, herinneringen en widget</h2><div class=
  h+='<p class="mut" style="margin-top:14px">Snelkoppeling op je beginscherm zetten:</p><div class="row"><button class="sm s" data-pin="inbox">Inbox</button><button class="sm s" data-pin="notities">Notities</button><button class="sm s" data-pin="focus">Wat nu?</button><button class="sm s" data-pin="dag">Dag</button></div>';
  h+='<p class="mut" style="margin-top:14px">Widget: houd een lege plek op je beginscherm ingedrukt, kies Widgets en zoek Start. Houd je het icoon van de app ingedrukt, dan zie je ook snelkoppelingen naar Inbox, Notities en Wat nu?.</p></div>';
  return h}
+function widgetCard(){if(!NP)return"";var w=wsv();return'<h2>Widget-uiterlijk</h2><div class="card"><p class="mut">Pas de widget aan, bijvoorbeeld als je achtergrond verandert.</p><label for="wal" style="display:block;margin-top:8px">Doorzichtigheid van de achtergrond: <b id="walv">'+w.al+'%</b> (0 = helemaal doorzichtig, 100 = vol)</label><input id="wal" type="range" min="0" max="100" value="'+w.al+'" style="padding:0"><div class="row" style="flex-wrap:nowrap;align-items:center;margin-top:6px"><label for="wbg" style="flex:1">Achtergrond</label><input id="wbg" type="color" value="'+w.bg+'" style="width:70px;height:44px;padding:4px;margin:0"></div><div class="row" style="flex-wrap:nowrap;align-items:center"><label for="wtx" style="flex:1">Tekst</label><input id="wtx" type="color" value="'+w.tx+'" style="width:70px;height:44px;padding:4px;margin:0"></div><div class="row" style="flex-wrap:nowrap;align-items:center"><label for="wac" style="flex:1">Accent (streepjes en knoppen)</label><input id="wac" type="color" value="'+w.ac+'" style="width:70px;height:44px;padding:4px;margin:0"></div><div class="row" style="margin-top:10px"><button class="sm s" data-wpre="dark">Donker</button><button class="sm s" data-wpre="light">Licht</button><button class="sm s" data-wrs="1">Standaard</button></div></div>'}
 function dataCard(){return'<h2>Gegevens</h2><div class="card"><p class="mut">Back-up of overzetten naar de app of een andere telefoon. Kopieer de tekst en plak hem in de andere versie.</p><button class="btn s" data-cpy="1" style="margin-top:8px">Kopieer al mijn gegevens</button><label for="imp" style="display:block;margin-top:12px">Gegevens plakken (vervangt alles in deze versie)</label><textarea id="imp" class="cpb" placeholder="Plak hier"></textarea><button class="btn s" data-imp="1">Gegevens terugzetten</button>'+(IMSG?'<p class="mut" style="margin-top:8px">'+esc(IMSG)+'</p>':'')+'</div>'}
 function inst(){
- return'<h1>Instellingen</h1><h2>Rustsignaal</h2><div class="card"><label for="cp">Na hoeveel minuten doen op één dag zeg ik: rust nu?</label><input id="cp" type="number" value="'+(S.cap||90)+'"><button class="btn s" data-cp="1">Opslaan</button></div>'+nativeCard()+dataCard()+themeCard()}
+ return'<h1>Instellingen</h1><h2>Rustsignaal</h2><div class="card"><label for="cp">Na hoeveel minuten doen op één dag zeg ik: rust nu?</label><input id="cp" type="number" value="'+(S.cap||90)+'"><button class="btn s" data-cp="1">Opslaan</button></div>'+nativeCard()+widgetCard()+dataCard()+themeCard()}
 function moveHuis(x,fd,dd,m){if(dd<ds()){NOTE="Je kunt een klusje niet naar het verleden slepen.";return}var pl=S.plan[dd]=S.plan[dd]||[];if(!pl.some(function(q){return q.id==x.id})){var u=pl.reduce(function(a,q){return a+wt(get(q.id))},0);if(u+wt(x)>3){NOTE="Die dag zit al vol met huishoudklusjes. Kies een andere dag.";return}if(fd&&S.plan[fd])S.plan[fd]=S.plan[fd].filter(function(q){return q.id!=x.id});if(fd&&S.sched&&S.sched[fd])delete S.sched[fd][x.id];pl.push({id:x.id,p:1})}if(m!=null){S.sched=S.sched||{};(S.sched[dd]=S.sched[dd]||{})[x.id]=m}save()}
 document.addEventListener("pointerdown",function(e){var h=e.target.closest&&e.target.closest("[data-dh]");if(!h)return;e.preventDefault();DRAG=true;
  var pr=h.dataset.dh.split("|"),x=get(pr[0]),fd=pr[1]||null;if(!x)return;var g=document.createElement("div");g.className="gh";g.textContent=x.n;document.body.appendChild(g);
@@ -500,6 +506,8 @@ function record(rm){stop();var k=ds();S.log[k]=S.log[k]||[];if(S.log[k].indexOf(
 document.addEventListener("click",function(e){
  var t=e.target.closest("button");if(!t)return;var d=t.dataset;NOTE="";
  if(d.t){tab=d.t;if(scr!="timer")scr="start";if(tab=="week")WSL=-1;scrollTo(0,0);render()}
+ else if(d.wrs){delete S.wstyle;save();wsSoon();render()}
+ else if(d.wpre){S.wstyle=d.wpre=="light"?{bg:"#ffffff",al:80,tx:"#17282b",ac:"#0f6e6e"}:{bg:"#182528",al:70,tx:"#eaf2f0",ac:"#e8b65c"};save();wsSoon();render()}
  else if(d.cs){S.calsync=!S.calsync;NMSG="";save();if(S.calsync)nativeSync(true);render()}
  else if(d.cs2){nativeSync(true);render()}
  else if(d.rem){S.remind=!S.remind;save();if(S.remind&&NP)NP.requestNotif().catch(function(){});nativeSync(true);render()}
@@ -625,6 +633,7 @@ document.addEventListener("change",function(e){var t=e.target,n=nget(NID);
 document.addEventListener("paste",function(e){if(!e.target.closest||!e.target.closest("#ne"))return;e.preventDefault();var tx=(e.clipboardData||window.clipboardData).getData("text/plain");document.execCommand("insertText",false,tx)});
 function route(){var h=(location.hash||"").replace("#","").toLowerCase();if(!h)return false;goTarget(h);return true}
 window.addEventListener("hashchange",function(){route()});
+document.addEventListener("input",function(e){var wid=e.target.id;if(wid=="wal"||wid=="wbg"||wid=="wtx"||wid=="wac"){S.wstyle=S.wstyle||{};var wv=e.target.value;if(wid=="wal"){S.wstyle.al=+wv;var lv=document.getElementById("walv");if(lv)lv.textContent=wv+"%"}else if(wid=="wbg")S.wstyle.bg=wv;else if(wid=="wtx")S.wstyle.tx=wv;else S.wstyle.ac=wv;save();wsSoon()}});
 document.addEventListener("input",function(e){if(e.target.id=="acc"){S.th=S.th||{p:"auto"};S.th.ac=e.target.value;applyTheme();save()}});
 document.addEventListener("resume",checkTarget);
 document.addEventListener("visibilitychange",function(){if(!document.hidden){checkTarget();if(NP)NP.refreshWidget().catch(function(){});render()}});
