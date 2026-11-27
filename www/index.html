@@ -218,7 +218,7 @@ var NOTE="";
 function sw(x){return x.k=="huis"&&since(x.id)>0}
 function swapEx(id){var pl=S.plan[ds()]||[],e=pl.filter(function(q){return q.id==id})[0];if(!e)return;S.sw=S.sw||{};var sl=S.sw[ds()]=S.sw[ds()]||[];sl.push(id);
  var c=ranked(function(x){return x.k=="huis"&&wt(x)<=3-used()+wt(get(id))&&sl.indexOf(x.id)<0&&!ex().some(function(q){return q.id==x.id})})[0];
- if(!c){NOTE="Er is nu niets anders dat bij je energie past. Dit klusje blijft staan.";sl.pop();return}
+ if(!c){S.plan[ds()]=pl.filter(function(q){return q.id!=id});var q0=sch();delete q0[id];NOTE="Er is geen ander klusje dat nu past. Dit klusje is uit je dag gehaald.";save();return}
  var q=sch();if(q[id]!==undefined){q[c.id]=q[id];delete q[id]}e.id=c.id;save()}
 var LT=null,WK=0,WSL=-1,WST=0,HW=64;
 var TB=[["dag","Dag","sun"],["week","Week","weekv"],["taken","Taken","check"],["routines","Routines","sync"],["huis","Huishouden","home"],["inbox","Inbox","inbox"],["notes","Notities","doc"],["jr","Dagboek","book"],["inst","Instellingen","sliders"]];
@@ -497,7 +497,7 @@ var GH=(T1-T0)/60*HW,cols=[],mx=1;
   Object.keys(sc).forEach(function(id){var x=get(id);if(!x||(x.k=="taak"&&tdate(x)!=k))return;bl.push({m:sc[id],d:du[id]||mins(x),n:x.n,x:x,t:"i",dn:lg.indexOf(id)>-1})});
   S.items.forEach(function(x){if(x.k=="taak"&&tdate(x)==k&&sc[x.id]===undefined)st.push('<div class="wt"><span>'+esc(x.n)+'</span><button class="hd" data-dt="'+x.id+'" aria-label="Sleep naar een andere dag">⠿</button></div>')});
   (S.plan[k]||[]).forEach(function(e){var x=get(e.id);if(x&&x.k=="huis"&&sc[x.id]===undefined)st.push('<div class="wh">'+ic("home",13)+'<span>'+esc(x.n)+'</span>'+(k>=td&&lg.indexOf(x.id)<0?'<button class="hd" data-dh="'+x.id+'|'+k+'" aria-label="Sleep naar een andere dag">⠿</button>':'')+'</div>')});
-  if(k>=td)S.items.forEach(function(x){if(x.k!="huis"||FP[x.id]||lg.indexOf(x.id)>-1||sc[x.id]!==undefined||(S.plan[k]||[]).some(function(e){return e.id==x.id}))return;if(dueOn(x,k))st.push('<div class="wh wp">'+ic("home",13)+'<span>'+esc(x.n)+'</span><button class="hd" data-dh="'+x.id+'|" aria-label="Sleep naar een dag">⠿</button></div>')});
+  var wcap=k==td?0:Math.max(0,3-(S.plan[k]||[]).length),wcn=0;if(k>=td)S.items.forEach(function(x){if(x.k!="huis"||wcn>=wcap||FP[x.id]||lg.indexOf(x.id)>-1||sc[x.id]!==undefined||(S.plan[k]||[]).some(function(e){return e.id==x.id}))return;if(dueOn(x,k)){wcn++;st.push('<div class="wh wp">'+ic("home",13)+'<span>'+esc(x.n)+'</span><button class="hd" data-dh="'+x.id+'|" aria-label="Sleep naar een dag">⠿</button></div>')}});
   mx=Math.max(mx,st.length);
   bl.sort(function(a,b){return a.m-b.m});var CL=[],CE=-1,CC=null;bl.forEach(function(q){var e=q.m+Math.max(q.d,30);if(!CC||q.m>=CE){CC={ends:[],bs:[]};CL.push(CC);CE=e}else CE=Math.max(CE,e);var l=0;while(CC.ends[l]!==undefined&&CC.ends[l]>q.m)l++;q.l=l;CC.ends[l]=e;CC.bs.push(q)});CL.forEach(function(c){c.bs.forEach(function(q){q.L=c.ends.length})});
   var g='';for(var m=T0;m<=T1;m+=60)g+='<div class="ln" style="top:'+((m-T0)/60*HW)+'px"></div>';
