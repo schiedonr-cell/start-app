@@ -177,6 +177,19 @@ public class StartNativePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void remindLater(PluginCall call) {
+        Long at = call.getLong("at");
+        if (at != null) ReminderReceiver.remindLater(getContext(), at, call.getString("text", ""));
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void cancelLater(PluginCall call) {
+        ReminderReceiver.cancelLater(getContext());
+        call.resolve();
+    }
+
+    @PluginMethod
     public void cancelTimer(PluginCall call) {
         ReminderReceiver.cancelTimer(getContext());
         call.resolve();

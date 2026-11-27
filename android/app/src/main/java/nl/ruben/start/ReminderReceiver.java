@@ -26,6 +26,10 @@ public class ReminderReceiver extends BroadcastReceiver {
             showTimer(context, intent.getStringExtra("title"), intent.getStringExtra("text"));
             return;
         }
+        if ("later".equals(intent.getStringExtra("type"))) {
+            showNotification(context, LATER_ID, "Even rusten?", intent.getStringExtra("text"));
+            return;
+        }
         String title = intent.getStringExtra("title");
         String text = intent.getStringExtra("text");
         int id = intent.getIntExtra("id", 1);
@@ -38,6 +42,26 @@ public class ReminderReceiver extends BroadcastReceiver {
 
     static final String TCHANNEL = "start_timer3";
     static final int TIMER_ID = 9001;
+    static final int LATER_ID = 9002;
+
+    static void remindLater(Context context, long at, String text) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+        Intent in = new Intent(context, ReminderReceiver.class);
+        in.putExtra("type", "later");
+        in.putExtra("text", text);
+        PendingIntent pi = PendingIntent.getBroadcast(context, LATER_ID, in, flags);
+        if (Build.VERSION.SDK_INT >= 23) am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
+        else am.set(AlarmManager.RTC_WAKEUP, at, pi);
+    }
+
+    static void cancelLater(Context context) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+        PendingIntent pi = PendingIntent.getBroadcast(context, LATER_ID, new Intent(context, ReminderReceiver.class), flags);
+        am.cancel(pi);
+        NotificationManagerCompat.from(context).cancel(LATER_ID);
+    }
 
     static PendingIntent openIntent(Context context, String target, int code) {
         Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse("start://" + target));
@@ -137,7 +161,7 @@ public class ReminderReceiver extends BroadcastReceiver {
             .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .addAction(0, "Wat nu?", pn)
+            .addAction(0, "Focus", pn)
             .addAction(0, "Open Start", pi);
         try {
             NotificationManagerCompat.from(context).notify(id, b.build());
