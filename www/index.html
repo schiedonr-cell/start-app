@@ -199,6 +199,7 @@ function render(){
  if(REM&&!busy()){var rd=REM;REM=null;applyRemote(rd);return}
  var h="",cls="";
  if(scr=="edit")h=edit();else if(scr=="blk")h=blkEd();else if(scr=="note")h=noteEd();else if(scr=="close")h=closeEd();else if(scr=="start"&&PG[tab])h=PG[tab]();
+ else if(scr=="focus")h=fView();
  else if(tab=="dag"&&scr=="start")h=dag();
  else if(tab=="dag"&&scr=="kies")h=kies();
  else if(scr=="timer")h=timer();else if(scr=="post")h=post();else if(scr=="after")h=after();
@@ -340,7 +341,7 @@ function dag(){
   if(b.t=="a")h+='<div class="bk fx" style="'+st+'"><div class="tx"><b>'+ic("cal",15)+' '+esc(b.n)+'</b><br><span class="du">'+hm(b.m)+'</span></div></div>';
   else{var d=since(b.id)==0,cp=b.d<30,inner='<b>'+ic(iconFor(b.x),15)+' '+esc(b.x.n)+'</b>'+(cp?' <span class="du">· '+b.d+' min</span>':'<br><span class="du">'+hm(b.m)+'–'+hm(b.m+b.d)+' · '+b.d+' min</span>')+(d?' ✓':'');h+='<div class="bk'+(cp?" cp":"")+(d?" dn":"")+'" style="'+st+'">'+(d?'':'<div class="rz t" data-rz="t" data-id="'+b.id+'"></div><div class="rz b" data-rz="b" data-id="'+b.id+'"></div>')+(d?'<div class="tx">'+inner+'</div>':'<button class="tx" data-op="'+b.id+'">'+inner+'</button>')+(d?'<button class="hd" data-un="'+b.id+'" aria-label="Toch niet gedaan">↩</button>':'')+(sw(b.x)?'<button class="hd" data-sw="'+b.id+'" aria-label="Andere" style="font-size:18px">↻</button>':'')+(d?'':'<button class="hd ck" data-ck="'+b.id+'" aria-label="Klaar">✓</button>')+'<button class="hd" data-dr="'+b.id+'" aria-label="Sleep">⠿</button></div>'}});
  h+='</div>'+TRH;
- h+='<button class="btn" data-nu="1" style="margin-top:6px">'+ic("focus",20)+' Wat nu?</button><button class="btn s" data-hv="1">'+(HV()?"Zware dag: aan (tik om uit te zetten)":"Zware dag")+'</button>'+qiCard();
+ h+='<button class="btn" data-nu="1" style="margin-top:6px">'+ic("focus",20)+' Wat nu?</button><button class="btn" data-fc="1" style="margin-top:6px">'+ic("focus",20)+' Focus</button><button class="btn s" data-hv="1">'+(HV()?"Zware dag: aan (tik om uit te zetten)":"Zware dag")+'</button>'+qiCard();
  var E=ex();
  h+=(NOTE?'<p class="mut">'+esc(NOTE)+'</p>':'');h+='<h2>Taken vandaag: '+tt().length+' van 3</h2><p class="mut">Zet taken in Vandaag via het tabblad Taken.</p><h2>Huishouden: '+(ex().some(function(e){return big(get(e.id))})?'grote klus vandaag':ex().length+' van 3')+'</h2><p class="mut">'+S.items.filter(function(x){return x.k=="huis"&&due(x)}).length+' huishoudklusjes zijn aan de beurt.</p>'+(ex().length?'<p class="mut">Vandaag: '+ex().map(function(e){var x=get(e.id);return esc(x.n)+(big(x)?' (grote klus)':'')}).join(", ")+'.</p>':'');
  if(HV())h+='<p class="mut">Zware dag: alleen het kleinste. Dat is genoeg.</p>';else h+='<div class="row"><button class="sm" data-pick="1">Kies zelf</button><button class="sm s" data-auto="1">Laat de app kiezen</button></div>';
@@ -356,6 +357,11 @@ function kies(){
   h+='<div class="card"><b>'+esc(x.n)+'</b><p class="mut">'+["laag","midden","hoog"][x.l]+' energie'+(big(x)?' · grote klus':'')+(x.iv?(due(x)?' · aan de beurt':' · nog niet nodig'):'')+'</p><div class="row">'+P.map(function(pn,i){return'<button class="sm s" data-ad="'+x.id+'" data-pt="'+i+'">'+pn+'</button>'}).join("")+'</div></div>'});
  return h;
 }
+function fView(){var k=ds(),lg=S.log[k]||[],s=sch(),hv=HV();var c=S.items.filter(function(x){if(lg.indexOf(x.id)>-1)return false;if(x.k=="routine"||x.k=="vast")return true;if(hv)return false;if(x.k=="huis")return ex().some(function(e){return e.id==x.id});if(x.k=="taak")return tdate(x)==k;return false});
+ c.sort(function(a,b){var sa=s[a.id],sb=s[b.id];return(sa===undefined?9999:sa)-(sb===undefined?9999:sb)});
+ var h='<h1>Focus</h1>';if(!c.length)h+='<div class="card"><p>Alles voor vandaag is gedaan.</p></div>';
+ c.forEach(function(x){h+='<div class="card"><div class="row" style="flex-wrap:nowrap;align-items:center"><span style="flex:1">'+ic(iconFor(x),18)+' <b>'+esc(x.n)+'</b></span><button class="sm s" data-fd="'+x.id+'|-5" aria-label="5 minuten minder">\u2212</button><b style="min-width:64px;text-align:center">'+bd(x)+' min</b><button class="sm s" data-fd="'+x.id+'|5" aria-label="5 minuten meer">+</button></div><button class="btn" data-fs="'+x.id+'" style="margin-top:8px">Start</button></div>'});
+ return h+'<button class="btn s" data-r="1">Terug naar mijn dag</button>'}
 function timer(){return'<div class="mid" style="margin-top:20vh"><p class="mut">'+esc(cur.n)+'</p><p>'+esc(txt(cur))+'</p>'+pre()+'</div><div class="big" id="tm"></div><div class="stack"><button class="btn" data-fin="1">Klaar</button><button class="btn s" data-pz="1">'+(paused?"Ga verder":"Pauzeer")+'</button><button class="btn s" data-enough="1">Dit was genoeg voor nu</button><button class="btn s" data-stp="1" style="border:0;color:var(--mut)">Stoppen, nog niet klaar</button></div>'}
 function hDone(id,o){return(S.log[ds(o)]||[]).indexOf(id)>-1}
 function hHeavy(o){return!!(S.heavy||{})[ds(o)]}
@@ -458,8 +464,8 @@ var WST2=null;function wsSoon(){if(!NP)return;clearTimeout(WST2);WST2=setTimeout
 function applyDone(list){if(!list||!list.length)return;list.forEach(function(q){var x=get(q.id);if(!x)return;var k=q.k;S.log[k]=S.log[k]||[];if(S.log[k].indexOf(x.id)<0)S.log[k].push(x.id);S.mn=S.mn||{};S.mn[k]=(S.mn[k]||0)+mins(x);if(x.k=="taak"){S.dn=S.dn||[];S.dn.unshift({item:x,d:k});S.dn=S.dn.slice(0,8);S.items=S.items.filter(function(z){return z.id!=x.id})}});save();NSIG="";render()}
 function checkDone(){if(!NP)return;NP.takeDone().then(function(r){applyDone(r&&r.items)}).catch(function(){})}
 function CMSG0(){NMSG="Bezig met synchroniseren…"}
-function goTarget(t){if(!t)return;t=String(t).toLowerCase();var M={dag:"dag",week:"week",taken:"taken",inbox:"inbox",notities:"notes",dagboek:"jr",huis:"huis",routines:"routines",afsluiten:"dag",focus:"dag"},m=M[t];if(!m)return;
- tab=m;if(scr!="timer")scr="start";if(t=="afsluiten"&&scr!="timer")scr="close";if(t=="focus"&&scr!="timer"){skip=[];cur=pick();scr="kaart"}if(tab=="week")WSL=-1;scrollTo(0,0);render()}
+function goTarget(t){if(!t)return;t=String(t).toLowerCase();var M={dag:"dag",week:"week",taken:"taken",inbox:"inbox",notities:"notes",dagboek:"jr",huis:"huis",routines:"routines",afsluiten:"dag",focus:"dag",rust:"dag"},m=M[t];if(!m)return;
+ tab=m;if(scr!="timer")scr="start";if(t=="afsluiten"&&scr!="timer")scr="close";if(t=="focus"&&scr!="timer")scr="focus";if(t=="rust"&&scr!="timer"&&get("r3")){begin("r3");return}if(tab=="week")WSL=-1;scrollTo(0,0);render()}
 function checkTarget(){if(!NP)return;checkDone();loadCal();NP.getTarget().then(function(r){if(r&&r.target)goTarget(r.target)}).catch(function(){})}
 function nativeCard(){var h='<h2>Agenda, herinneringen en widget</h2><div class="card">';
  if(!NP)return h+'<p class="mut">Dit werkt alleen in de Android-app.</p></div>';
@@ -516,8 +522,12 @@ var GH=(T1-T0)/60*HW,cols=[],mx=1;
  h+='<details class="card"><summary>'+ic("cal",18)+' Afspraken ('+wa.length+')</summary>'+wa.map(function(a){return'<div class="ap"><b>'+esc(a.t)+'</b><span>'+dlab(a.d)+' · '+esc(a.n)+'</span>'+(a.cal?'':'<button class="x" data-ad2="'+a.id+'" aria-label="Verwijder">✕</button>')+'</div>'}).join("")+'<label for="at">Tijd</label><input id="at" type="time"><label for="an">Wat</label><input id="an"><label for="adt">Dag</label><input id="adt" type="date" value="'+dstr(WK==0?new Date():days[0])+'"><button class="btn" data-aa="1">Opslaan</button></details>';
  return h}
 function tick(){var e=document.getElementById("tm");if(e)e.textContent=String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0")}
-function stop(){if(T){clearInterval(T);T=null}}
-function begin(id){PRE=0;cur=get(id);scr="timer";left=(MM||bd(cur))*60;TOT=left;stop();paused=false;T=setInterval(function(){if(paused)return;left--;if(left<=0){left=0;stop();try{navigator.vibrate&&navigator.vibrate(400)}catch(x){}}tick()},1000);render()}
+var endAt=0;
+function tcalc(){if(paused||!endAt)return;left=Math.max(0,Math.ceil((endAt-Date.now())/1000))}
+function tmCancel(){try{if(NP&&NP.cancelTimer)NP.cancelTimer().catch(function(){})}catch(e){}}
+function tmSched(){try{if(!NP||!NP.startTimer||!cur)return;var T0s=["Goed gedaan! \uD83C\uDF89","Mooi, tijd is om \u2728","Je hebt het gedaan \uD83D\uDC4F"],X0=["Je hebt "+cur.n+" afgerond. Wat fijn! Wat wil je nu: even rusten of iets kleins oppakken?","Dat is gelukt: "+cur.n+" is klaar. Even rusten, of kijk wat er nog open staat?","Goed bezig, "+cur.n+" is afgerond. Neem even rust of kies de volgende stap."],r=Math.floor(Math.random()*3);NP.startTimer({at:endAt,title:T0s[r],text:X0[r]}).catch(function(){})}catch(e){}}
+function stop(){if(T){clearInterval(T);T=null}tmCancel()}
+function begin(id){PRE=0;cur=get(id);scr="timer";left=(MM||bd(cur))*60;TOT=left;stop();paused=false;endAt=Date.now()+left*1000;tmSched();T=setInterval(function(){if(paused)return;tcalc();if(left<=0){left=0;if(T){clearInterval(T);T=null}try{navigator.vibrate&&navigator.vibrate(400)}catch(x){}}tick()},500);render()}
 function record(rm){stop();var k=ds();S.log[k]=S.log[k]||[];if(S.log[k].indexOf(cur.id)<0)S.log[k].push(cur.id);if(rm&&cur.k=="taak"){S.dn=S.dn||[];S.dn.unshift({item:cur,d:ds()});S.dn=S.dn.slice(0,8);S.items=S.items.filter(function(x){return x.id!=cur.id})}S.mn=S.mn||{};S.mn[ds()]=(S.mn[ds()]||0)+Math.round((rm?TOT:TOT-left)/60);save();skip=[];LAST=cur;if(cur.k=="routine"){scr="post";render();return}cur=null;scr="after";render()}
 document.addEventListener("click",function(e){
  var t=e.target.closest("button");if(!t)return;var d=t.dataset;NOTE="";
@@ -576,11 +586,14 @@ document.addEventListener("click",function(e){
  else if(d.hv){S.heavy=S.heavy||{};if(S.heavy[ds()])delete S.heavy[ds()];else{S.heavy[ds()]=1;S.en=0}save();render()}
  else if(d.more){MM=5;begin(d.more);MM=0}
  else if(d.cp){S.cap=parseInt(document.getElementById("cp").value)||90;save();t.textContent="Opgeslagen"}
- else if(d.pz){paused=!paused;render()}
+ else if(d.pz){if(!paused){tcalc();paused=true;tmCancel()}else{paused=false;endAt=Date.now()+left*1000;tmSched()}render()}
  else if(d.stp){stop();cur=null;scr="start";render()}
  else if(d.un){var UL=S.log[ds()]||[],ux=UL.indexOf(d.un);if(ux>-1)UL.splice(ux,1);save();render()}
  else if(d.rs){var q=S.dn.splice(+d.rs,1)[0],QL=S.log[q.d]||[],qx=QL.indexOf(q.item.id);if(qx>-1)QL.splice(qx,1);S.items.push(q.item);save();render()}
  else if(d.nu){skip=[];cur=pick();scr="kaart";render()}
+ else if(d.fc){scr="focus";scrollTo(0,0);render()}
+ else if(d.fs){begin(d.fs)}
+ else if(d.fd){var fp=d.fd.split("|"),fx=get(fp[0]);if(fx){S.dur=S.dur||{};var dd0=S.dur[ds()]=S.dur[ds()]||{};dd0[fx.id]=Math.max(5,Math.min(180,bd(fx)+(+fp[1])));save()}render()}
  else if(d.pre){PRE=+d.pre;render()}
  else if(d.post||d.skp){if(d.post){S.fb=S.fb||[];S.fb.push({id:cur.id,a:PRE,b:+d.post,d:ds()})}cur=null;scr="after";save();render()}
  else if(d.pl){var pf=(S.pref||{})[d.pl];place(d.pl,pf!==undefined?pf:DEFT[+d.pp]);render()}
@@ -654,7 +667,7 @@ window.addEventListener("hashchange",function(){route()});
 document.addEventListener("input",function(e){var wid=e.target.id;if(wid=="wal"||wid=="wbg"||wid=="wtx"||wid=="wac"){S.wstyle=S.wstyle||{};var wv=e.target.value;if(wid=="wal"){S.wstyle.al=+wv;var lv=document.getElementById("walv");if(lv)lv.textContent=wv+"%"}else if(wid=="wbg")S.wstyle.bg=wv;else if(wid=="wtx")S.wstyle.tx=wv;else S.wstyle.ac=wv;save();wsSoon()}});
 document.addEventListener("input",function(e){if(e.target.id=="acc"){S.th=S.th||{p:"auto"};S.th.ac=e.target.value;applyTheme();save()}});
 document.addEventListener("resume",checkTarget);
-document.addEventListener("visibilitychange",function(){if(!document.hidden){autoFill();autoPlace();save();calSoon();checkTarget();if(NP)NP.refreshWidget().catch(function(){});render()}});
+document.addEventListener("visibilitychange",function(){if(!document.hidden){if(scr=="timer"&&T&&!paused){tcalc();tick()}autoFill();autoPlace();save();calSoon();checkTarget();if(NP)NP.refreshWidget().catch(function(){});render()}});
 applyTheme();
 render();
 route();

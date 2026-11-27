@@ -22,6 +22,10 @@ public class ReminderReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if ("timer".equals(intent.getStringExtra("type"))) {
+            showTimer(context, intent.getStringExtra("title"), intent.getStringExtra("text"));
+            return;
+        }
         String title = intent.getStringExtra("title");
         String text = intent.getStringExtra("text");
         int id = intent.getIntExtra("id", 1);
@@ -30,6 +34,84 @@ public class ReminderReceiver extends BroadcastReceiver {
             text = composeNudge(context, intent);
         }
         showNotification(context, id, title == null ? "Start" : title, text == null ? "" : text);
+    }
+
+    static final String TCHANNEL = "start_timer2";
+    static final int TIMER_ID = 9001;
+
+    static PendingIntent openIntent(Context context, String target, int code) {
+        Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse("start://" + target));
+        open.setClass(context, MainActivity.class);
+        open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+        return PendingIntent.getActivity(context, code, open, flags);
+    }
+
+    /** Melding met geluid als de focus-timer afloopt. */
+    static void showTimer(Context context, String title, String text) {
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        Uri snd = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION);
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel ch = new NotificationChannel(TCHANNEL, "Focus-timer", NotificationManager.IMPORTANCE_HIGH);
+            ch.setDescription("Melding als je focus-tijd om is");
+            android.media.AudioAttributes aa = new android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
+            ch.setSound(snd, aa);
+            ch.enableVibration(true);
+            ch.setVibrationPattern(new long[]{0, 400, 200, 400});
+            nm.createNotificationChannel(ch);
+        }
+        String tx = text == null ? "" : text;
+        NotificationCompat.Builder b = new NotificationCompat.Builder(context, TCHANNEL)
+            .setSmallIcon(R.drawable.ic_stat)
+            .setContentTitle(title == null ? "Start" : title)
+            .setContentText(tx)
+            .setStyle(new NotificationCompat.BigTextStyle().bigText(tx))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setSound(snd)
+            .setVibrate(new long[]{0, 400, 200, 400})
+            .setAutoCancel(true)
+            .setContentIntent(openIntent(context, "focus", TIMER_ID))
+            .addAction(0, "Focus", openIntent(context, "focus", TIMER_ID + 1))
+            .addAction(0, "Even rusten", openIntent(context, "rust", TIMER_ID + 2));
+        try {
+            NotificationManagerCompat.from(context).notify(TIMER_ID, b.build());
+        } catch (SecurityException e) {
+            // geen toestemming voor meldingen
+        }
+    }
+
+    static void startTimer(Context context, long at, String title, String text) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+        Intent in = new Intent(context, ReminderReceiver.class);
+        in.putExtra("type", "timer");
+        in.putExtra("title", title);
+        in.putExtra("text", text);
+        PendingIntent pi = PendingIntent.getBroadcast(context, TIMER_ID, in, flags);
+        try {
+            if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) {
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
+            } else if (Build.VERSION.SDK_INT >= 23) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
+            } else {
+                am.set(AlarmManager.RTC_WAKEUP, at, pi);
+            }
+        } catch (SecurityException e) {
+            if (Build.VERSION.SDK_INT >= 23) am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
+            else am.set(AlarmManager.RTC_WAKEUP, at, pi);
+        }
+    }
+
+    static void cancelTimer(Context context) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+        Intent in = new Intent(context, ReminderReceiver.class);
+        PendingIntent pi = PendingIntent.getBroadcast(context, TIMER_ID, in, flags);
+        am.cancel(pi);
+        NotificationManagerCompat.from(context).cancel(TIMER_ID);
     }
 
     static void showNotification(Context context, int id, String title, String text) {

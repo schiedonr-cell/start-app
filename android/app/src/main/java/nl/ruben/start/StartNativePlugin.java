@@ -169,6 +169,20 @@ public class StartNativePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void startTimer(PluginCall call) {
+        Long at = call.getLong("at");
+        if (at == null) { call.resolve(); return; }
+        ReminderReceiver.startTimer(getContext(), at, call.getString("title", "Start"), call.getString("text", ""));
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void cancelTimer(PluginCall call) {
+        ReminderReceiver.cancelTimer(getContext());
+        call.resolve();
+    }
+
+    @PluginMethod
     public void setReminders(PluginCall call) {
         JSArray items = call.getArray("items");
         JSONArray arr = new JSONArray();
