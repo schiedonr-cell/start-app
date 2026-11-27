@@ -324,13 +324,14 @@ function dag(){
  var s=sch(),items=[];
  S.items.filter(function(x){return x.k=="routine"||x.k=="vast"}).forEach(function(x){items.push({x:x,p:x.p})});
  if(!HV()){ex().forEach(function(e){items.push({x:get(e.id),p:e.p})});tt().forEach(function(x){items.push({x:x,p:1})})}
- var tray=items.filter(function(i){return s[i.x.id]===undefined});
+ var dnI=items.filter(function(i){return since(i.x.id)==0}),DNH=dnI.length?'<details class="card"><summary>Gedaan vandaag ('+dnI.length+')</summary><div class="tray">'+dnI.map(function(i){return'<div class="chp dn"><span>'+ic(iconFor(i.x),16)+' '+esc(i.x.n)+' \u2713</span><button class="hd" data-un="'+i.x.id+'" aria-label="Toch niet gedaan">\u21A9</button></div>'}).join("")+'</div></details>':"";
+ var tray=items.filter(function(i){return s[i.x.id]===undefined&&since(i.x.id)>0});
  var H0=h;h='<div id="tray" class="card"><b>Nog te plaatsen</b>';
  if(!tray.length)h+='<p class="mut">Alles heeft een plek.</p>';else h+='<p class="mut">Sleep met ⠿ naar de tijdlijn, of tik op Plaats.</p>';
  h+='<div class="tray">'+tray.map(function(i){return'<div class="chp'+(since(i.x.id)==0?" dn":"")+'"><button class="hd" data-dr="'+i.x.id+'" aria-label="Sleep">⠿</button><span>'+ic(iconFor(i.x),16)+' '+esc(i.x.n)+'</span>'+(since(i.x.id)==0?'<button class="hd" data-un="'+i.x.id+'" aria-label="Toch niet gedaan">↩</button>':'')+(sw(i.x)?'<button class="hd" data-sw="'+i.x.id+'" aria-label="Andere" style="font-size:18px">↻</button>':'')+(since(i.x.id)==0?'':'<button class="hd ck" data-ck="'+i.x.id+'" aria-label="Klaar">✓</button>')+'<button class="sm" data-pl="'+i.x.id+'" data-pp="'+i.p+'">Plaats</button></div>'}).join("")+'</div></div>';
- var TRH=tray.length?h:"";h=H0;
+ var TRH=(tray.length?h:"")+DNH;h=H0;
  var ap=appsOn(ds()).sort(function(a,b){return a.t<b.t?-1:1}),bl=[];
- items.forEach(function(i){if(s[i.x.id]!==undefined)bl.push({id:i.x.id,m:s[i.x.id],d:bd(i.x),x:i.x,t:"i"})});
+ items.forEach(function(i){if(s[i.x.id]!==undefined&&since(i.x.id)>0)bl.push({id:i.x.id,m:s[i.x.id],d:bd(i.x),x:i.x,t:"i"})});
  ap.forEach(function(a){bl.push({id:a.id,m:tmin(a.t),d:a.dur||60,n:a.n,t:"a"})});
  bl.sort(function(a,b){return a.m-b.m});var CL=[],CE=-1,CC=null;
  bl.forEach(function(b){var e=b.m+Math.max(b.d,b.t=="a"?20:15);if(!CC||b.m>=CE){CC={ends:[],bs:[]};CL.push(CC);CE=e}else CE=Math.max(CE,e);var l=0;while(CC.ends[l]!==undefined&&CC.ends[l]>b.m)l++;b.l=l;CC.ends[l]=e;CC.bs.push(b)});CL.forEach(function(c){c.bs.forEach(function(b){b.L=c.ends.length})});
@@ -359,7 +360,7 @@ function kies(){
 }
 function fView(){var k=ds(),lg=S.log[k]||[],s=sch(),hv=HV();var c=S.items.filter(function(x){if(lg.indexOf(x.id)>-1)return false;if(x.k=="routine"||x.k=="vast")return true;if(hv)return false;if(x.k=="huis")return ex().some(function(e){return e.id==x.id});if(x.k=="taak")return tdate(x)==k;return false});
  c.sort(function(a,b){var sa=s[a.id],sb=s[b.id];return(sa===undefined?9999:sa)-(sb===undefined?9999:sb)});
- var h='<h1>Focus</h1>';if(!c.length)h+='<div class="card"><p>Alles voor vandaag is gedaan.</p></div>';
+ var h='<h1>Focus</h1><div class="card"><b>Iets anders</b><label for="ff">Wat schiet je te binnen?</label><input id="ff"><label for="fm">Minuten</label><input id="fm" type="number" value="15"><button class="btn" data-ff="1" style="margin-top:8px">Start</button></div>';if(!c.length)h+='<div class="card"><p>Alles voor vandaag is gedaan.</p></div>';
  c.forEach(function(x){h+='<div class="card"><div class="row" style="flex-wrap:nowrap;align-items:center"><span style="flex:1">'+ic(iconFor(x),18)+' <b>'+esc(x.n)+'</b></span><button class="sm s" data-fd="'+x.id+'|-5" aria-label="5 minuten minder">\u2212</button><b style="min-width:64px;text-align:center">'+bd(x)+' min</b><button class="sm s" data-fd="'+x.id+'|5" aria-label="5 minuten meer">+</button></div><button class="btn" data-fs="'+x.id+'" style="margin-top:8px">Start</button></div>'});
  return h+'<button class="btn s" data-r="1">Terug naar mijn dag</button>'}
 function timer(){return'<div class="mid" style="margin-top:20vh"><p class="mut">'+esc(cur.n)+'</p><p>'+esc(txt(cur))+'</p>'+pre()+'</div><div class="big" id="tm"></div><div class="stack"><button class="btn" data-fin="1">Klaar</button><button class="btn s" data-pz="1">'+(paused?"Ga verder":"Pauzeer")+'</button><button class="btn s" data-enough="1">Dit was genoeg voor nu</button><button class="btn s" data-stp="1" style="border:0;color:var(--mut)">Stoppen, nog niet klaar</button></div>'}
@@ -527,8 +528,8 @@ function tcalc(){if(paused||!endAt)return;left=Math.max(0,Math.ceil((endAt-Date.
 function tmCancel(){try{if(NP&&NP.cancelTimer)NP.cancelTimer().catch(function(){})}catch(e){}}
 function tmSched(){try{if(!NP||!NP.startTimer||!cur)return;var T0s=["Goed gedaan! \uD83C\uDF89","Mooi, tijd is om \u2728","Je hebt het gedaan \uD83D\uDC4F"],X0=["Je hebt "+cur.n+" afgerond. Wat fijn! Wat wil je nu: even rusten of iets kleins oppakken?","Dat is gelukt: "+cur.n+" is klaar. Even rusten, of kijk wat er nog open staat?","Goed bezig, "+cur.n+" is afgerond. Neem even rust of kies de volgende stap."],r=Math.floor(Math.random()*3);NP.startTimer({at:endAt,title:T0s[r],text:X0[r]}).catch(function(){})}catch(e){}}
 function stop(){if(T){clearInterval(T);T=null}tmCancel()}
-function begin(id){PRE=0;cur=get(id);scr="timer";left=(MM||bd(cur))*60;TOT=left;stop();paused=false;endAt=Date.now()+left*1000;tmSched();T=setInterval(function(){if(paused)return;tcalc();if(left<=0){left=0;if(T){clearInterval(T);T=null}try{navigator.vibrate&&navigator.vibrate(400)}catch(x){}}tick()},500);render()}
-function record(rm){stop();var k=ds();S.log[k]=S.log[k]||[];if(S.log[k].indexOf(cur.id)<0)S.log[k].push(cur.id);if(rm&&cur.k=="taak"){S.dn=S.dn||[];S.dn.unshift({item:cur,d:ds()});S.dn=S.dn.slice(0,8);S.items=S.items.filter(function(x){return x.id!=cur.id})}S.mn=S.mn||{};S.mn[ds()]=(S.mn[ds()]||0)+Math.round((rm?TOT:TOT-left)/60);save();skip=[];LAST=cur;if(cur.k=="routine"){scr="post";render();return}cur=null;scr="after";render()}
+function begin(id,obj){PRE=0;cur=obj||get(id);scr="timer";left=(MM||(obj?obj.m:bd(cur)))*60;TOT=left;stop();paused=false;endAt=Date.now()+left*1000;tmSched();T=setInterval(function(){if(paused)return;tcalc();if(left<=0){left=0;if(T){clearInterval(T);T=null}try{navigator.vibrate&&navigator.vibrate(400)}catch(x){}}tick()},500);render()}
+function record(rm){stop();var k=ds();if(cur.k!="focus"){S.log[k]=S.log[k]||[];if(S.log[k].indexOf(cur.id)<0)S.log[k].push(cur.id)}if(rm&&cur.k=="taak"){S.dn=S.dn||[];S.dn.unshift({item:cur,d:ds()});S.dn=S.dn.slice(0,8);S.items=S.items.filter(function(x){return x.id!=cur.id})}S.mn=S.mn||{};S.mn[ds()]=(S.mn[ds()]||0)+Math.round((rm?TOT:TOT-left)/60);save();skip=[];LAST=cur;if(cur.k=="routine"){scr="post";render();return}cur=null;scr="after";render()}
 document.addEventListener("click",function(e){
  var t=e.target.closest("button");if(!t)return;var d=t.dataset;NOTE="";
  if(d.t){tab=d.t;if(scr!="timer")scr="start";if(tab=="week")WSL=-1;scrollTo(0,0);render()}
@@ -593,6 +594,7 @@ document.addEventListener("click",function(e){
  else if(d.nu){skip=[];cur=pick();scr="kaart";render()}
  else if(d.fc){scr="focus";scrollTo(0,0);render()}
  else if(d.fs){begin(d.fs)}
+ else if(d.ff){var fn=document.getElementById("ff").value.trim();if(!fn)return;var fm=Math.max(1,Math.min(180,parseInt(document.getElementById("fm").value)||15));begin(null,{id:"f"+Date.now(),n:fn,k:"focus",m:fm,s:"",l:0})}
  else if(d.fd){var fp=d.fd.split("|"),fx=get(fp[0]);if(fx){S.dur=S.dur||{};var dd0=S.dur[ds()]=S.dur[ds()]||{};dd0[fx.id]=Math.max(5,Math.min(180,bd(fx)+(+fp[1])));save()}render()}
  else if(d.pre){PRE=+d.pre;render()}
  else if(d.post||d.skp){if(d.post){S.fb=S.fb||[];S.fb.push({id:cur.id,a:PRE,b:+d.post,d:ds()})}cur=null;scr="after";save();render()}

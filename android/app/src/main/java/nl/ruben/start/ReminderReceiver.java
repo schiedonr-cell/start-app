@@ -36,7 +36,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         showNotification(context, id, title == null ? "Start" : title, text == null ? "" : text);
     }
 
-    static final String TCHANNEL = "start_timer2";
+    static final String TCHANNEL = "start_timer3";
     static final int TIMER_ID = 9001;
 
     static PendingIntent openIntent(Context context, String target, int code) {
@@ -50,7 +50,8 @@ public class ReminderReceiver extends BroadcastReceiver {
     /** Melding met geluid als de focus-timer afloopt. */
     static void showTimer(Context context, String title, String text) {
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        Uri snd = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION);
+        Uri snd = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
+        if (snd == null) snd = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION);
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationChannel ch = new NotificationChannel(TCHANNEL, "Focus-timer", NotificationManager.IMPORTANCE_HIGH);
             ch.setDescription("Melding als je focus-tijd om is");
@@ -59,7 +60,7 @@ public class ReminderReceiver extends BroadcastReceiver {
                 .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
             ch.setSound(snd, aa);
             ch.enableVibration(true);
-            ch.setVibrationPattern(new long[]{0, 400, 200, 400});
+            ch.setVibrationPattern(new long[]{0, 600, 300, 600, 300, 600});
             nm.createNotificationChannel(ch);
         }
         String tx = text == null ? "" : text;
@@ -71,9 +72,8 @@ public class ReminderReceiver extends BroadcastReceiver {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setSound(snd)
-            .setVibrate(new long[]{0, 400, 200, 400})
+            .setVibrate(new long[]{0, 600, 300, 600, 300, 600})
             .setAutoCancel(true)
-            .setContentIntent(openIntent(context, "focus", TIMER_ID))
             .addAction(0, "Focus", openIntent(context, "focus", TIMER_ID + 1))
             .addAction(0, "Even rusten", openIntent(context, "rust", TIMER_ID + 2));
         try {
