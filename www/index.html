@@ -185,6 +185,7 @@ function ds(o){var d=new Date();d.setDate(d.getDate()-(o||0));return d.getFullYe
 function since(id){for(var i=0;i<60;i++){if((S.log[ds(i)]||[]).indexOf(id)>-1)return i}return 99}
 function ex(){S.plan[ds()]=S.plan[ds()]||[];var a=S.plan[ds()].filter(function(e){var x=get(e.id);return x&&x.k=="huis"});return a}
 function tt(){return S.items.filter(function(x){return x.k=="taak"&&tdate(x)==ds()})}
+function fullOk(n){return n<3||confirm("Let op: je dag heeft al "+n+" taken. Weet je zeker dat je er nog een bij wilt zetten?")}
 var FULLT="Vandaag staan al 3 taken. Haal er eerst één weg of zet hem naar Deze week."
 function get(id){return S.items.filter(function(x){return x.id==id})[0]}
 function bd(x){return((S.dur||{})[ds()]||{})[x.id]||mins(x)}
@@ -230,8 +231,8 @@ function wkn(d){var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()
 function dlab(k){return new Date(k+"T12:00:00").toLocaleDateString("nl-NL",{weekday:"short",day:"numeric",month:"short"})}
 function tdate(x){if(x.dt)return x.dt<ds()?ds():x.dt;return x.b===0?ds():null}
 function tbkt(x){var d=tdate(x);if(!d)return x.b;if(d==ds())return 0;return d<=dstr(addDays(mon(0),6))?1:2}
-function setB(x,nb){if(nb==0&&tdate(x)!=ds()&&tt().length>=3){NOTE=FULLT;return}var od=tdate(x);if(od&&S.sched&&S.sched[od])delete S.sched[od][x.id];x.b=nb;delete x.dt;save()}
-function moveDay(x,dd,m){if(dd<ds()){NOTE="Je kunt een taak niet naar het verleden slepen.";return}var c=S.items.filter(function(q){return q.k=="taak"&&q.id!=x.id&&tdate(q)==dd}).length;if(c>=3){NOTE="Die dag heeft al 3 taken. Kies een andere dag.";return}var od=tdate(x);if(od&&S.sched&&S.sched[od])delete S.sched[od][x.id];x.dt=dd;x.b=dd==ds()?0:(dd<=dstr(addDays(mon(0),6))?1:2);if(m!=null){S.sched=S.sched||{};(S.sched[dd]=S.sched[dd]||{})[x.id]=m}save()}
+function setB(x,nb){if(nb==0&&tdate(x)!=ds()&&!fullOk(tt().length))return;var od=tdate(x);if(od&&S.sched&&S.sched[od])delete S.sched[od][x.id];x.b=nb;delete x.dt;save()}
+function moveDay(x,dd,m){if(dd<ds()){NOTE="Je kunt een taak niet naar het verleden slepen.";return}var c=S.items.filter(function(q){return q.k=="taak"&&q.id!=x.id&&tdate(q)==dd}).length;if(!fullOk(c))return;var od=tdate(x);if(od&&S.sched&&S.sched[od])delete S.sched[od][x.id];x.dt=dd;x.b=dd==ds()?0:(dd<=dstr(addDays(mon(0),6))?1:2);if(m!=null){S.sched=S.sched||{};(S.sched[dd]=S.sched[dd]||{})[x.id]=m}save()}
 var BN=["Vandaag","Deze week","Volgende week","Ooit"],EID=null;
 function taken(){
  var h='<h1>Taken</h1>'+(NOTE?'<p style="color:var(--ac)">'+esc(NOTE)+'</p>':'');
@@ -547,7 +548,7 @@ document.addEventListener("click",function(e){
  else if(d.cl){scr="close";render()}
  else if(d.cx){scr="start";render()}
  else if(d.csv){S.jr=S.jr||{};var g=function(i){return document.getElementById(i).value.trim()};var hd=g("chd");if(hd)hd.split(/\n+/).forEach(function(l,ix){l=l.trim();if(l)inb().unshift({id:"i"+Date.now()+"_"+ix,t:l})});S.jr[ds()]={good:g("cg"),next:g("cm"),done:doneNames(),ts:Date.now()};save();scr="start";render()}
- else if(d.nxt){var pv=jget(ds(1));if(tt().length>=3)NOTE=FULLT;else{S.items.push({id:"t"+Date.now(),n:pv.next,k:"taak",l:0,m:15,iv:0,b:0,s:"Begin met één minuut"});S.ndis=S.ndis||{};S.ndis[ds()]=1;save()}render()}
+ else if(d.nxt){var pv=jget(ds(1));if(!fullOk(tt().length)){}else{S.items.push({id:"t"+Date.now(),n:pv.next,k:"taak",l:0,m:15,iv:0,b:0,s:"Begin met één minuut"});S.ndis=S.ndis||{};S.ndis[ds()]=1;save()}render()}
  else if(d.nxs){S.ndis=S.ndis||{};S.ndis[ds()]=1;save();render()}
  else if(d.nn){var nn0={id:"o"+Date.now(),f:S.nfo||fol()[0],title:"",html:"",pin:false,ts:Date.now()};nts().push(nn0);NID=nn0.id;NCONF=false;scr="note";save();render();setTimeout(function(){var e=document.getElementById("ne");if(e)e.focus()},50)}
  else if(d.nopen){NID=d.nopen;NCONF=false;scr="note";render()}
@@ -584,8 +585,8 @@ document.addEventListener("click",function(e){
  else if(d.post||d.skp){if(d.post){S.fb=S.fb||[];S.fb.push({id:cur.id,a:PRE,b:+d.post,d:ds()})}cur=null;scr="after";save();render()}
  else if(d.pl){var pf=(S.pref||{})[d.pl];place(d.pl,pf!==undefined?pf:DEFT[+d.pp]);render()}
  else if(d.sw){swapEx(d.sw);render()}
- else if(d.ta){var tn=document.getElementById("tn").value.trim();if(!tn)return;var tb=+document.getElementById("tb").value;if(tb==0&&tt().length>=3)NOTE=FULLT;else{S.items.push({id:"t"+Date.now(),n:tn,k:"taak",l:0,m:15,iv:0,b:tb,s:"Begin met één minuut"});save()}render()}
- else if(d.mv){var mx=get(d.mv),nb=mx.b+ +d.dir;if(nb==0&&tt().length>=3)NOTE=FULLT;else{mx.b=nb;save()}render()}
+ else if(d.ta){var tn=document.getElementById("tn").value.trim();if(!tn)return;var tb=+document.getElementById("tb").value;if(tb==0&&!fullOk(tt().length)){}else{S.items.push({id:"t"+Date.now(),n:tn,k:"taak",l:0,m:15,iv:0,b:tb,s:"Begin met één minuut"});save()}render()}
+ else if(d.mv){var mx=get(d.mv),nb=mx.b+ +d.dir;if(nb==0&&!fullOk(tt().length)){}else{mx.b=nb;save()}render()}
  else if(d.tdone){cur=get(d.tdone);TOT=mins(cur)*60;left=0;record(true)}
  else if(d.tdel){S.items=S.items.filter(function(x){return x.id!=d.tdel});save();render()}
  else if(d.ed){EID=d.ed;scr="edit";render()}
