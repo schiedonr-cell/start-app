@@ -343,7 +343,6 @@ function dag(){
  var E=ex();
  h+=(NOTE?'<p class="mut">'+esc(NOTE)+'</p>':'');h+='<h2>Taken vandaag: '+tt().length+' van 3</h2><p class="mut">Zet taken in Vandaag via het tabblad Taken.</p><h2>Huishouden: '+(ex().some(function(e){return big(get(e.id))})?'grote klus vandaag':ex().length+' van 3')+'</h2><p class="mut">'+S.items.filter(function(x){return x.k=="huis"&&due(x)}).length+' huishoudklusjes zijn aan de beurt.</p>'+(ex().length?'<p class="mut">Vandaag: '+ex().map(function(e){var x=get(e.id);return esc(x.n)+(big(x)?' (grote klus)':'')}).join(", ")+'.</p>':'');
  if(HV())h+='<p class="mut">Zware dag: alleen het kleinste. Dat is genoeg.</p>';else h+='<div class="row"><button class="sm" data-pick="1">Kies zelf</button><button class="sm s" data-auto="1">Laat de app kiezen</button></div>';
- else h+='<p class="mut">'+(ex().some(function(e){return big(get(e.id))})?'Een grote klus is genoeg voor vandaag.':'3 klusjes, genoeg voor vandaag.')+'</p>';
  h+=weekCard();
  var jj=jget(ds());h+='<div class="card"><b>Dag afsluiten</b><p class="mut">'+(jj?'Je dag is afgesloten. Goed zo.':'Even terugkijken, duurt twee minuten.')+'</p><button class="btn s" data-cl="1" style="margin-top:8px">'+(jj?'Aanpassen':'Dag afsluiten')+'</button></div>';
  h+='<details class="card"><summary>'+ic("cal",18)+' Afspraken ('+ap.length+')</summary>'+ap.map(function(a){return'<div class="ap"><b>'+esc(a.t)+'</b><span>'+esc(a.n)+'</span>'+(a.cal?'':'<button class="x" data-ad2="'+a.id+'" aria-label="Verwijder">✕</button>')+'</div>'}).join("")+'<label for="at">Tijd</label><input id="at" type="time"><label for="an">Wat</label><input id="an"><label for="adt">Dag</label><input id="adt" type="date" value="'+ds()+'"><button class="btn" data-aa="1">Opslaan</button></details>';
@@ -600,7 +599,7 @@ document.addEventListener("click",function(e){
  else if(d.enough)record(false);
  else if(d.pick){scr="kies";render()}
  else if(d.back){scr="start";render()}
- else if(d.ad){S.plan[ds()]=S.plan[ds()]||[];S.plan[ds()].push({id:d.ad,p:+d.pt});save()scr="start";render()}
+ else if(d.ad){S.plan[ds()]=S.plan[ds()]||[];S.plan[ds()].push({id:d.ad,p:+d.pt});save();scr="start";render()}
  else if(d.auto){var c=ranked(function(x){return x.k=="huis"&&!ex().some(function(q){return q.id==x.id})});if(c[0]){S.plan[ds()]=S.plan[ds()]||[];S.plan[ds()].push({id:c[0].id,p:1});save()}render()}
  else if(d.rm){S.plan[ds()]=S.plan[ds()].filter(function(q){return q.id!=d.rm});save();render()}
  else if(d.aa){var tm=document.getElementById("at").value,nm=document.getElementById("an").value.trim(),dt=document.getElementById("adt").value||ds();if(tm&&nm){S.appts.push({id:"p"+Date.now(),t:tm,n:nm,d:dt});save();render()}}
