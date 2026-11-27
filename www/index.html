@@ -217,7 +217,7 @@ function nu(){
 var NOTE="";
 function sw(x){return x.k=="huis"&&since(x.id)>0}
 function swapEx(id){var pl=S.plan[ds()]||[],e=pl.filter(function(q){return q.id==id})[0];if(!e)return;S.sw=S.sw||{};var sl=S.sw[ds()]=S.sw[ds()]||[];sl.push(id);
- var c=ranked(function(x){return x.k=="huis"&&wt(x)<=3-used()+wt(get(id))&&sl.indexOf(x.id)<0&&!ex().some(function(q){return q.id==x.id})})[0];
+ var c=ranked(function(x){return x.k=="huis"&&sl.indexOf(x.id)<0&&!ex().some(function(q){return q.id==x.id})})[0];
  if(!c){S.plan[ds()]=pl.filter(function(q){return q.id!=id});var q0=sch();delete q0[id];NOTE="Er is geen ander klusje dat nu past. Dit klusje is uit je dag gehaald.";save();return}
  var q=sch();if(q[id]!==undefined){q[c.id]=q[id];delete q[id]}e.id=c.id;save()}
 var LT=null,WK=0,WSL=-1,WST=0,HW=64;
@@ -342,7 +342,7 @@ function dag(){
  h+='<button class="btn" data-nu="1" style="margin-top:6px">'+ic("focus",20)+' Wat nu?</button><button class="btn s" data-hv="1">'+(HV()?"Zware dag: aan (tik om uit te zetten)":"Zware dag")+'</button>'+qiCard();
  var E=ex();
  h+=(NOTE?'<p class="mut">'+esc(NOTE)+'</p>':'');h+='<h2>Taken vandaag: '+tt().length+' van 3</h2><p class="mut">Zet taken in Vandaag via het tabblad Taken.</p><h2>Huishouden: '+(ex().some(function(e){return big(get(e.id))})?'grote klus vandaag':ex().length+' van 3')+'</h2><p class="mut">'+S.items.filter(function(x){return x.k=="huis"&&due(x)}).length+' huishoudklusjes zijn aan de beurt.</p>'+(ex().length?'<p class="mut">Vandaag: '+ex().map(function(e){var x=get(e.id);return esc(x.n)+(big(x)?' (grote klus)':'')}).join(", ")+'.</p>':'');
- if(HV())h+='<p class="mut">Zware dag: alleen het kleinste. Dat is genoeg.</p>';else if(used()<3)h+='<div class="row"><button class="sm" data-pick="1">Kies zelf</button><button class="sm s" data-auto="1">Laat de app kiezen</button></div>';
+ if(HV())h+='<p class="mut">Zware dag: alleen het kleinste. Dat is genoeg.</p>';else h+='<div class="row"><button class="sm" data-pick="1">Kies zelf</button><button class="sm s" data-auto="1">Laat de app kiezen</button></div>';
  else h+='<p class="mut">'+(ex().some(function(e){return big(get(e.id))})?'Een grote klus is genoeg voor vandaag.':'3 klusjes, genoeg voor vandaag.')+'</p>';
  h+=weekCard();
  var jj=jget(ds());h+='<div class="card"><b>Dag afsluiten</b><p class="mut">'+(jj?'Je dag is afgesloten. Goed zo.':'Even terugkijken, duurt twee minuten.')+'</p><button class="btn s" data-cl="1" style="margin-top:8px">'+(jj?'Aanpassen':'Dag afsluiten')+'</button></div>';
@@ -352,7 +352,7 @@ function dag(){
 function kies(){
  var E=ex().map(function(e){return e.id});
  var h='<h1>Kies een extra</h1><button class="sm s" data-back="1" style="align-self:flex-start">Terug</button>';
- S.items.filter(function(x){return x.k=="huis"&&wt(x)<=3-used()&&E.indexOf(x.id)<0}).forEach(function(x){
+ S.items.filter(function(x){return x.k=="huis"&&E.indexOf(x.id)<0}).forEach(function(x){
   h+='<div class="card"><b>'+esc(x.n)+'</b><p class="mut">'+["laag","midden","hoog"][x.l]+' energie'+(big(x)?' · grote klus':'')+(x.iv?(due(x)?' · aan de beurt':' · nog niet nodig'):'')+'</p><div class="row">'+P.map(function(pn,i){return'<button class="sm s" data-ad="'+x.id+'" data-pt="'+i+'">'+pn+'</button>'}).join("")+'</div></div>'});
  return h;
 }
@@ -442,7 +442,7 @@ function nudgeItems(days){var out=[],ns=S.nudge;if(!ns||!ns.on)return out;var no
 function hsh(s){var h=7;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
 function nativeSync(force){if(!NP)return;
  var days=[],W={},sig="",i;for(i=0;i<7;i++){var kd=dstr(addDays(new Date(),i));days.push(kd);W[kd]=calWant(kd);sig+=kd+JSON.stringify(W[kd].map(function(w){return[w.id,w.m,w.d]}))}
- var wi=[];days.forEach(function(k){var L=W[k].map(function(w){return{m:w.m,n:w.n,t:hm(w.m)+" – "+hm(w.e),a:0,id:w.id,ic:(function(x){return x&&x.k=="taak"?"check":x&&x.k=="routine"?"sync":"home"})(get(w.id))}});S.appts.filter(function(a){return a.d==k}).forEach(function(a){L.push({m:tmin(a.t),n:a.n,t:hm(tmin(a.t))+" – "+hm(tmin(a.t)+60),a:1})});L.sort(function(a,b){return a.m-b.m});L.forEach(function(q){var o={s:evMs(k,q.m),n:q.n,t:q.t,a:q.a,ic:q.ic||"cal"};if(q.id){o.id=q.id;o.k=k}wi.push(o)})});
+ var wi=[];days.forEach(function(k){var L=W[k].map(function(w){return{m:w.m,n:w.n,t:"",a:0,id:w.id,ic:(function(x){return x&&x.k=="taak"?"check":x&&x.k=="routine"?"sync":"home"})(get(w.id))}});S.appts.filter(function(a){return a.d==k}).forEach(function(a){L.push({m:tmin(a.t),n:a.n,t:hm(tmin(a.t))+" – "+hm(tmin(a.t)+60),a:1})});L.sort(function(a,b){return a.m-b.m});L.forEach(function(q){var o={s:evMs(k,q.m),n:q.n,t:q.t,a:q.a,ic:q.ic||"cal"};if(q.id){o.id=q.id;o.k=k}wi.push(o)})});
  var nz=nudgeItems(days);sig+=JSON.stringify(wi)+JSON.stringify(S.wstyle||{})+JSON.stringify(S.nudge||{})+JSON.stringify(nz)+"|"+!!S.calsync+"|"+!!S.remind+"|"+(S.remmin==null?5:S.remmin);
  if(!force&&sig===NSIG)return;if(NB){NQ=true;return}
  NB=true;NSIG=sig;var jobs=[];
@@ -478,7 +478,7 @@ function widgetCard(){if(!NP)return"";var w=wsv();return'<h2>Widget-uiterlijk</h
 function dataCard(){return'<h2>Gegevens</h2><div class="card"><p class="mut">Back-up of overzetten naar de app of een andere telefoon. Kopieer de tekst en plak hem in de andere versie.</p><button class="btn s" data-cpy="1" style="margin-top:8px">Kopieer al mijn gegevens</button><label for="imp" style="display:block;margin-top:12px">Gegevens plakken (vervangt alles in deze versie)</label><textarea id="imp" class="cpb" placeholder="Plak hier"></textarea><button class="btn s" data-imp="1">Gegevens terugzetten</button>'+(IMSG?'<p class="mut" style="margin-top:8px">'+esc(IMSG)+'</p>':'')+'</div>'}
 function inst(){
  return'<h1>Instellingen</h1><h2>Rustsignaal</h2><div class="card"><label for="cp">Na hoeveel minuten doen op één dag zeg ik: rust nu?</label><input id="cp" type="number" value="'+(S.cap||90)+'"><button class="btn s" data-cp="1">Opslaan</button></div>'+nativeCard()+widgetCard()+dataCard()+themeCard()}
-function moveHuis(x,fd,dd,m){if(dd<ds()){NOTE="Je kunt een klusje niet naar het verleden slepen.";return}var pl=S.plan[dd]=S.plan[dd]||[];if(!pl.some(function(q){return q.id==x.id})){var u=pl.reduce(function(a,q){return a+wt(get(q.id))},0);if(u+wt(x)>3){NOTE="Die dag zit al vol met huishoudklusjes. Kies een andere dag.";return}if(fd&&S.plan[fd])S.plan[fd]=S.plan[fd].filter(function(q){return q.id!=x.id});if(fd&&S.sched&&S.sched[fd])delete S.sched[fd][x.id];pl.push({id:x.id,p:1})}if(m!=null){S.sched=S.sched||{};(S.sched[dd]=S.sched[dd]||{})[x.id]=m}save()}
+function moveHuis(x,fd,dd,m){if(dd<ds()){NOTE="Je kunt een klusje niet naar het verleden slepen.";return}var pl=S.plan[dd]=S.plan[dd]||[];if(!pl.some(function(q){return q.id==x.id})){var u=pl.reduce(function(a,q){return a+wt(get(q.id))},0);if(fd&&S.plan[fd])S.plan[fd]=S.plan[fd].filter(function(q){return q.id!=x.id});if(fd&&S.sched&&S.sched[fd])delete S.sched[fd][x.id];pl.push({id:x.id,p:1})}if(m!=null){S.sched=S.sched||{};(S.sched[dd]=S.sched[dd]||{})[x.id]=m}save()}
 document.addEventListener("pointerdown",function(e){var h=e.target.closest&&e.target.closest("[data-dh]");if(!h)return;e.preventDefault();DRAG=true;
  var pr=h.dataset.dh.split("|"),x=get(pr[0]),fd=pr[1]||null;if(!x)return;var g=document.createElement("div");g.className="gh";g.textContent=x.n;document.body.appendChild(g);
  function mv(ev){var wc=document.getElementById("wkc");if(wc){if(ev.clientX<50)wc.scrollLeft-=14;else if(ev.clientX>innerWidth-50)wc.scrollLeft+=14;var wr=wc.getBoundingClientRect();if(ev.clientY>wr.top&&ev.clientY<wr.top+110)wc.scrollTop-=12;else if(ev.clientY<wr.bottom&&ev.clientY>wr.bottom-70)wc.scrollTop+=12}g.style.left=(ev.clientX-20)+"px";g.style.top=(ev.clientY-24)+"px"}
@@ -600,8 +600,8 @@ document.addEventListener("click",function(e){
  else if(d.enough)record(false);
  else if(d.pick){scr="kies";render()}
  else if(d.back){scr="start";render()}
- else if(d.ad){S.plan[ds()]=S.plan[ds()]||[];if(used()+wt(get(d.ad))<=3){S.plan[ds()].push({id:d.ad,p:+d.pt});save()}scr="start";render()}
- else if(d.auto){var c=ranked(function(x){return x.k=="huis"&&wt(x)<=3-used()&&!ex().some(function(q){return q.id==x.id})});if(c[0]){S.plan[ds()]=S.plan[ds()]||[];S.plan[ds()].push({id:c[0].id,p:1});save()}render()}
+ else if(d.ad){S.plan[ds()]=S.plan[ds()]||[];S.plan[ds()].push({id:d.ad,p:+d.pt});save()scr="start";render()}
+ else if(d.auto){var c=ranked(function(x){return x.k=="huis"&&!ex().some(function(q){return q.id==x.id})});if(c[0]){S.plan[ds()]=S.plan[ds()]||[];S.plan[ds()].push({id:c[0].id,p:1});save()}render()}
  else if(d.rm){S.plan[ds()]=S.plan[ds()].filter(function(q){return q.id!=d.rm});save();render()}
  else if(d.aa){var tm=document.getElementById("at").value,nm=document.getElementById("an").value.trim(),dt=document.getElementById("adt").value||ds();if(tm&&nm){S.appts.push({id:"p"+Date.now(),t:tm,n:nm,d:dt});save();render()}}
  else if(d.ad2){S.appts=S.appts.filter(function(a){return a.id!=d.ad2});save();render()}

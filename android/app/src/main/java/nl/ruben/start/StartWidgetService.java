@@ -177,6 +177,7 @@ public class StartWidgetService extends RemoteViewsService {
                 v.setInt(R.id.i_icon, "setColorFilter", o.optInt("a", 0) == 1 ? soft : acc);
                 v.setTextViewText(R.id.i_title, o.optString("n"));
                 v.setTextViewText(R.id.i_time, o.optString("t"));
+                v.setViewVisibility(R.id.i_time, o.optString("t").length() == 0 ? android.view.View.GONE : android.view.View.VISIBLE);
                 v.setInt(R.id.i_bar, "setBackgroundColor", o.optInt("a", 0) == 1 ? soft : acc);
                 Intent fill = new Intent();
                 fill.putExtra("act", "open");
