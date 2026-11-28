@@ -119,7 +119,8 @@ public class StartWidgetService extends RemoteViewsService {
                         return x.n.compareToIgnoreCase(y.n);
                     }
                 });
-                java.text.SimpleDateFormat dayFmt = new java.text.SimpleDateFormat("d MMM", new java.util.Locale("nl", "NL"));
+                java.text.SimpleDateFormat dayFmt = new java.text.SimpleDateFormat("d/M", new java.util.Locale("nl", "NL"));
+                final String[] wdShort = {"ZON", "MAA", "DIN", "WOE", "DON", "VRI", "ZAT"};
                 java.text.SimpleDateFormat wdFmt = new java.text.SimpleDateFormat("EEEE", new java.util.Locale("nl", "NL"));
                 String lastDay = "";
                 for (Row r : rows) {
@@ -131,7 +132,9 @@ public class StartWidgetService extends RemoteViewsService {
                         lastDay = key;
                         long diff = (r.ms - from) / (24L * 3600 * 1000);
                         String dn = dayFmt.format(dt).replace(".", "");
-                        String dl = diff == 0 ? "Vandaag" : diff == 1 ? "Morgen" : wdFmt.format(dt);
+                        java.util.Calendar cal = java.util.Calendar.getInstance();
+                        cal.setTime(dt);
+                        String dl = wdShort[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1];
                         o.put("d", dn);
                         o.put("l", dl);
                     }
@@ -170,14 +173,17 @@ public class StartWidgetService extends RemoteViewsService {
                 v.setTextColor(R.id.i_title, text);
                 v.setTextColor(R.id.i_time, soft);
                 v.setTextColor(R.id.i_check, acc);
-                v.setTextViewText(R.id.i_date, d.length() > 0 ? (d + "\n" + l) : "");
+                v.setTextViewText(R.id.i_date, d.length() > 0 ? (l + "\n" + d) : "");
                 String icn = o.optString("ic", "cal");
                 int icr = "home".equals(icn) ? R.drawable.ic_w_home : "check".equals(icn) ? R.drawable.ic_w_check : "sync".equals(icn) ? R.drawable.ic_w_sync : R.drawable.ic_w_cal;
                 v.setImageViewResource(R.id.i_icon, icr);
                 v.setInt(R.id.i_icon, "setColorFilter", o.optInt("a", 0) == 1 ? soft : acc);
                 v.setTextViewText(R.id.i_title, o.optString("n"));
                 v.setTextViewText(R.id.i_time, o.optString("t"));
-                v.setViewVisibility(R.id.i_time, o.optString("t").length() == 0 ? android.view.View.GONE : android.view.View.VISIBLE);
+                boolean noTime = o.optString("t").length() == 0;
+                boolean hasLabel = o.optString("d").length() > 0;
+                if (noTime && hasLabel) v.setTextViewText(R.id.i_time, " ");
+                v.setViewVisibility(R.id.i_time, (noTime && !hasLabel) ? android.view.View.GONE : android.view.View.VISIBLE);
                 v.setInt(R.id.i_bar, "setBackgroundColor", o.optInt("a", 0) == 1 ? soft : acc);
                 Intent fill = new Intent();
                 fill.putExtra("act", "open");
