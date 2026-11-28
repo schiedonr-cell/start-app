@@ -132,9 +132,9 @@ public class StartWidgetService extends RemoteViewsService {
                         lastDay = key;
                         long diff = (r.ms - from) / (24L * 3600 * 1000);
                         String dn = dayFmt.format(dt).replace(".", "");
-                        java.util.Calendar cal = java.util.Calendar.getInstance();
-                        cal.setTime(dt);
-                        String dl = wdShort[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1];
+                        java.util.Calendar wcal = java.util.Calendar.getInstance();
+                        wcal.setTime(dt);
+                        String dl = wdShort[wcal.get(java.util.Calendar.DAY_OF_WEEK) - 1];
                         o.put("d", dn);
                         o.put("l", dl);
                     }
